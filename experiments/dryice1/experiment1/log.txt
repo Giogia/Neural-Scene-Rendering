@@ -1,0 +1,12 @@
+Python 3.6.9 (default, Nov  7 2019, 10:44:02) 
+[GCC 8.3.0]
+PyTorch 1.4.0
+train.py experiments/dryice1/experiment1/config.py
+Output path: experiments/dryice1/experiment1
+Config loaded (0.01 s)
+Dataset instantiated (2.08 s)
+Writer instantiated (0.00 s)
+Autoencoder instantiated (11.98 s)
+Optimizer instantiated (0.01 s)
+Iteration 0: loss = 9.77407, kldiv = 0.00445, tvl1 = 0.04144, alphapr = 0.00114, irgbmse = 9.77364, iter/sec = 0.20
+Iteration 1: loss = 4.88783, kldiv = 0.01026, tvl1 = 0.04471, alphapr = 0.00157, irgbmse = 4.88736
