@@ -39,7 +39,7 @@ def get_autoencoder(dataset):
 # A profile is instantiated by the training or evaluation scripts
 # and controls how the dataset and autoencoder is created
 class Train():
-    batchsize=16
+    batchsize=8
     maxiter=500000
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
     def get_dataset(self): return get_dataset(subsampletype="random2")
@@ -75,7 +75,7 @@ class ProgressWriter():
 
 class Progress():
     """Write out diagnostic images during training."""
-    batchsize=16
+    batchsize=8
     def get_ae_args(self): return dict(outputlist=["irgbrec"])
     def get_dataset(self): return get_dataset(maxframes=1)
     def get_writer(self): return ProgressWriter()
