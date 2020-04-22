@@ -6,20 +6,18 @@
 #
 """Train an autoencoder."""
 import argparse
-import gc
 import importlib
 import importlib.util
 import os
+import re
 import sys
 import time
-import re
-
-sys.dont_write_bytecode = True
 
 import numpy as np
-
-import torch
 import torch.utils.data
+from models.lr_finder import LRFinder
+
+sys.dont_write_bytecode = True
 
 torch.backends.cudnn.benchmark = True  # gotta go fast!
 
