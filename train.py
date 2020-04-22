@@ -12,6 +12,7 @@ import importlib.util
 import os
 import sys
 import time
+import re
 
 sys.dont_write_bytecode = True
 
