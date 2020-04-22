@@ -1,0 +1,12 @@
+Python 3.6.9 (default, Nov  7 2019, 10:44:02) 
+[GCC 8.3.0]
+PyTorch 1.4.0
+train.py experiments/dryice1/experiment2/config.py
+Output path: experiments/dryice1/experiment2
+Config loaded (0.68 s)
+Dataset instantiated (131.35 s)
+Writer instantiated (0.00 s)
+Autoencoder instantiated (13.48 s)
+Optimizer instantiated (0.01 s)
+tensor(12.7208, device='cuda:0', grad_fn=<AddBackward0>)
+Iteration 0: loss = 12.72084, kldiv = 0.00169, tvl1 = 0.04093, alphapr = 0.00770, irgbmse = 12.72035, iter/sec = 0.27
