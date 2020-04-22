@@ -6,8 +6,10 @@
 #
 import torch
 
+
 class JoinDataset(torch.nn.Module):
     """Combine outputs of a set of datasets."""
+
     def __init__(self, *args):
         super(JoinDataset, self).__init__()
 

@@ -9,6 +9,7 @@ import numpy as np
 import torch
 import torch.utils.data
 
+
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, length, period=128):
         self.length = length
@@ -26,9 +27,9 @@ class Dataset(torch.utils.data.Dataset):
 
     def get_krt(self):
         return {"rotate": {
-                "focal": self.focal,
-                "princpt": self.princpt,
-                "size": np.array([self.width, self.height])}}
+            "focal": self.focal,
+            "princpt": self.princpt,
+            "size": np.array([self.width, self.height])}}
 
     def __getitem__(self, idx):
         t = (np.cos(idx * 2. * np.pi / self.period) * 0.5 + 0.5)

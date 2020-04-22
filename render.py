@@ -11,11 +11,14 @@ import importlib.util
 import os
 import sys
 import time
+
 sys.dont_write_bytecode = True
 
 import torch
 import torch.utils.data
-torch.backends.cudnn.benchmark = True # gotta go fast!
+
+torch.backends.cudnn.benchmark = True  # gotta go fast!
+
 
 def import_module(file_path, module_name):
     spec = importlib.util.spec_from_file_location(module_name, file_path)
@@ -23,6 +26,7 @@ def import_module(file_path, module_name):
     spec.loader.exec_module(module)
     sys.modules[module_name] = module
     return module
+
 
 if __name__ == "__main__":
     # parse arguments

@@ -12,16 +12,20 @@ import importlib.util
 import os
 import sys
 import time
+
 sys.dont_write_bytecode = True
 
 import numpy as np
 
 import torch
 import torch.utils.data
-torch.backends.cudnn.benchmark = True # gotta go fast!
+
+torch.backends.cudnn.benchmark = True  # gotta go fast!
+
 
 class Logger(object):
     """Duplicates all stdout to a file."""
+
     def __init__(self, path, resume):
         if not resume and os.path.exists(path):
             print(path + " exists")
@@ -51,11 +55,13 @@ class Logger(object):
     def flush(self):
         pass
 
+
 def import_module(file_path, module_name):
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
 
 if __name__ == "__main__":
     # parse arguments
@@ -87,11 +93,13 @@ if __name__ == "__main__":
     # build dataset & testing dataset
     starttime = time.time()
     testdataset = progressprof.get_dataset()
-    dataloader = torch.utils.data.DataLoader(testdataset, batch_size=progressprof.batchsize, shuffle=False, drop_last=True, num_workers=0)
+    dataloader = torch.utils.data.DataLoader(testdataset, batch_size=progressprof.batchsize, shuffle=False,
+                                             drop_last=True, num_workers=0)
     for testbatch in dataloader:
         break
     dataset = profile.get_dataset()
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=profile.batchsize, shuffle=True, drop_last=True, num_workers=16)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=profile.batchsize, shuffle=True, drop_last=True,
+                                             num_workers=16)
     print("Dataset instantiated ({:.2f} s)".format(time.time() - starttime))
 
     # data writer
@@ -131,9 +139,11 @@ if __name__ == "__main__":
 
             # print current information
             print("Iteration {}: loss = {:.5f}, ".format(iternum, float(loss.item())) +
-                    ", ".join(["{} = {:.5f}".format(k,
-                        float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v, tuple) else torch.mean(v)))
-                        for k, v in output["losses"].items()]), end="")
+                  ", ".join(["{} = {:.5f}".format(k,
+                                                  float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v,
+                                                                                                        tuple) else torch.mean(
+                                                      v)))
+                             for k, v in output["losses"].items()]), end="")
             if iternum % 10 == 0:
                 endtime = time.time()
                 ips = 10. / (endtime - starttime)
@@ -145,7 +155,8 @@ if __name__ == "__main__":
             # compute evaluation output
             if iternum in evalpoints:
                 with torch.no_grad():
-                    testoutput = ae(iternum, [], **{k: x.to("cuda") for k, x in testbatch.items()}, **progressprof.get_ae_args())
+                    testoutput = ae(iternum, [], **{k: x.to("cuda") for k, x in testbatch.items()},
+                                    **progressprof.get_ae_args())
 
                 b = data["campos"].size(0)
                 writer.batch(iternum, iternum * profile.batchsize + torch.arange(b), **testbatch, **testoutput)
@@ -165,7 +176,7 @@ if __name__ == "__main__":
             prevloss = loss.item()
 
             # save intermediate results
-            if iternum % 1000 == 0:
+            if iternum % 10 == 0:
                 torch.save(ae.module.state_dict(), "{}/aeparams.pt".format(outpath))
 
             iternum += 1

@@ -15,6 +15,7 @@ import matplotlib.cm as cm
 
 from PIL import Image
 
+
 def writeimage(x):
     randid, itemnum, imgout = x
 
@@ -25,8 +26,10 @@ def writeimage(x):
 
     Image.fromarray(imgout).save("/tmp/{}/{:06}.jpg".format(randid, itemnum))
 
+
 class Writer():
-    def __init__(self, outpath, showtarget=False, showdiff=False, bgcolor=[0., 0., 0.], colcorrect=[1.35, 1.16, 1.5], nthreads=16):
+    def __init__(self, outpath, showtarget=False, showdiff=False, bgcolor=[0., 0., 0.], colcorrect=[1.35, 1.16, 1.5],
+                 nthreads=16):
         self.outpath = outpath
         self.showtarget = showtarget
         self.showdiff = showdiff
@@ -69,20 +72,20 @@ class Writer():
             imgout = np.concatenate((imgout, irgbsqerr), axis=2)
 
         self.writepool.map(writeimage,
-                zip([self.randid for i in range(itemnum.size(0))],
-                    itemnum.data.to("cpu").numpy(),
-                    imgout))
+                           zip([self.randid for i in range(itemnum.size(0))],
+                               itemnum.data.to("cpu").numpy(),
+                               imgout))
         self.nitems += itemnum.size(0)
 
     def finalize(self):
         # make video file
         command = (
-                "ffmpeg -y -r 30 -i /tmp/{}/%06d.jpg "
-                "-vframes {} "
-                "-vcodec libx264 -crf 18 "
-                "-pix_fmt yuv420p "
-                "{}".format(self.randid, self.nitems, self.outpath)
-                ).split()
+            "ffmpeg -y -r 30 -i /tmp/{}/%06d.jpg "
+            "-vframes {} "
+            "-vcodec libx264 -crf 18 "
+            "-pix_fmt yuv420p "
+            "{}".format(self.randid, self.nitems, self.outpath)
+        ).split()
         subprocess.call(command)
 
         shutil.rmtree("/tmp/{}".format(self.randid))
