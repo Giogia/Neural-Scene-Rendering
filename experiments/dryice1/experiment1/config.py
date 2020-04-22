@@ -7,6 +7,7 @@
 import os
 import data.dryice1 as datamodel
 
+
 def get_dataset(camerafilter=lambda x: True, maxframes=-1, subsampletype=None):
     return datamodel.Dataset(
         camerafilter=camerafilter,
@@ -20,6 +21,7 @@ def get_dataset(camerafilter=lambda x: True, maxframes=-1, subsampletype=None):
         subsampletype=subsampletype,
         subsamplesize=128,
         worldscale=1. / 256)
+
 
 def get_autoencoder(dataset):
     import models.neurvol1 as aemodel
@@ -35,14 +37,18 @@ def get_autoencoder(dataset):
         colorcalib.Colorcal(dataset.get_allcameras()),
         4. / 256)
 
+
 ### profiles
 # A profile is instantiated by the training or evaluation scripts
 # and controls how the dataset and autoencoder is created
 class Train():
-    batchsize=16
-    maxiter=500000
+    batchsize = 16
+    maxiter = 500000
+
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
+
     def get_dataset(self): return get_dataset(subsampletype="random2")
+
     def get_optimizer(self, ae):
         import itertools
         import torch.optim
@@ -52,8 +58,10 @@ class Train():
             [{"params": x} for x in ae.decoder.parameters()],
             [{"params": x} for x in ae.colorcal.parameters()])
         return torch.optim.Adam(aeparams, lr=lr, betas=(0.9, 0.999))
+
     def get_loss_weights(self):
         return {"irgbmse": 1.0, "kldiv": 0.001, "alphapr": 0.01, "tvl1": 0.01}
+
 
 class ProgressWriter():
     def batch(self, iternum, itemnum, **kwargs):
@@ -71,26 +79,38 @@ class ProgressWriter():
                 row = []
         imgout = np.concatenate(rows, axis=0)
         outpath = os.path.dirname(__file__)
-        Image.fromarray(np.clip(imgout, 0, 255).astype(np.uint8)).save(os.path.join(outpath, "prog_{:06}.jpg".format(iternum)))
+        Image.fromarray(np.clip(imgout, 0, 255).astype(np.uint8)).save(
+            os.path.join(outpath, "prog_{:06}.jpg".format(iternum)))
+
 
 class Progress():
     """Write out diagnostic images during training."""
-    batchsize=16
+    batchsize = 16
+
     def get_ae_args(self): return dict(outputlist=["irgbrec"])
+
     def get_dataset(self): return get_dataset(maxframes=1)
+
     def get_writer(self): return ProgressWriter()
+
 
 class Render():
     """Render model with training camera or from novel viewpoints.
     
     e.g., python render.py {configpath} Render --maxframes 128"""
+
     def __init__(self, cam=None, maxframes=-1, showtarget=False, viewtemplate=False):
         self.cam = cam
         self.maxframes = maxframes
         self.showtarget = showtarget
         self.viewtemplate = viewtemplate
-    def get_autoencoder(self, dataset): return get_autoencoder(dataset)
-    def get_ae_args(self): return dict(outputlist=["irgbrec"], viewtemplate=self.viewtemplate)
+
+    def get_autoencoder(self, dataset):
+        return get_autoencoder(dataset)
+
+    def get_ae_args(self):
+        return dict(outputlist=["irgbrec"], viewtemplate=self.viewtemplate)
+
     def get_dataset(self):
         import data.utils
         import eval.cameras.rotate as cameralib
@@ -100,11 +120,12 @@ class Render():
             return data.utils.JoinDataset(camdataset, dataset)
         else:
             return dataset
+
     def get_writer(self):
         import eval.writers.videowriter as writerlib
         return writerlib.Writer(
             os.path.join(os.path.dirname(__file__),
-                "render_{}{}.mp4".format(
-                    "rotate" if self.cam is None else self.cam,
-                    "_template" if self.viewtemplate else "")),
+                         "render_{}{}.mp4".format(
+                             "rotate" if self.cam is None else self.cam,
+                             "_template" if self.viewtemplate else "")),
             showtarget=self.showtarget)
