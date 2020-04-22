@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class VolSampler(nn.Module):
     def __init__(self, displacementwarp=False):
         super(VolSampler, self).__init__()
@@ -21,7 +22,7 @@ class VolSampler(nn.Module):
                 pos = (torch.sum(
                     (pos - gwarpt[:, None, None, None, :])[:, :, :, :, None, :] *
                     gwarprot[:, None, None, None, :, :], dim=-1) *
-                    gwarps[:, None, None, None, :])
+                       gwarps[:, None, None, None, :])
             if warp is not None:
                 if self.displacementwarp:
                     pos = pos + F.grid_sample(warp, pos).permute(0, 2, 3, 4, 1)

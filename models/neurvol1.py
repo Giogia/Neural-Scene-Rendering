@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Autoencoder(nn.Module):
     def __init__(self, dataset, encoder, decoder, volsampler, colorcal, dt, stepjitter=0.01, estimatebg=False):
         super(Autoencoder, self).__init__()
@@ -36,13 +37,13 @@ class Autoencoder(nn.Module):
         ret = super(Autoencoder, self).state_dict(destination, prefix, keep_vars)
         if not self.estimatebg:
             for k in self.bg.keys():
-                del ret[prefix+"bg."+k]
+                del ret[prefix + "bg." + k]
         return ret
 
     def forward(self, iternum, losslist, camrot, campos, focal, princpt, pixelcoords, validinput,
-            fixedcamimage=None, encoding=None, keypoints=None, camindex=None,
-            image=None, imagevalid=None, viewtemplate=False,
-            outputlist=[]):
+                fixedcamimage=None, encoding=None, keypoints=None, camindex=None,
+                image=None, imagevalid=None, viewtemplate=False,
+                outputlist=[]):
         result = {"losses": {}}
 
         # encode input or get encoding
@@ -64,13 +65,13 @@ class Autoencoder(nn.Module):
         # compute raymarching starting points
         with torch.no_grad():
             t1 = (-1.0 - campos[:, None, None, :]) / raydir
-            t2 = ( 1.0 - campos[:, None, None, :]) / raydir
+            t2 = (1.0 - campos[:, None, None, :]) / raydir
             tmin = torch.max(torch.min(t1[..., 0], t2[..., 0]),
-                   torch.max(torch.min(t1[..., 1], t2[..., 1]),
-                             torch.min(t1[..., 2], t2[..., 2])))
+                             torch.max(torch.min(t1[..., 1], t2[..., 1]),
+                                       torch.min(t1[..., 2], t2[..., 2])))
             tmax = torch.min(torch.max(t1[..., 0], t2[..., 0]),
-                   torch.min(torch.max(t1[..., 1], t2[..., 1]),
-                             torch.max(t1[..., 2], t2[..., 2])))
+                             torch.min(torch.max(t1[..., 1], t2[..., 1]),
+                                       torch.max(t1[..., 2], t2[..., 2])))
 
             intersections = tmin < tmax
             t = torch.where(intersections, tmin, torch.zeros_like(tmin)).clamp(min=0.)
@@ -80,9 +81,9 @@ class Autoencoder(nn.Module):
         # random starting point
         t = t - self.dt * torch.rand_like(t)
 
-        raypos = campos[:, None, None, :] + raydir * t[..., None] # NHWC
-        rayrgb = torch.zeros_like(raypos.permute(0, 3, 1, 2)) # NCHW
-        rayalpha = torch.zeros_like(rayrgb[:, 0:1, :, :]) # NCHW
+        raypos = campos[:, None, None, :] + raydir * t[..., None]  # NHWC
+        rayrgb = torch.zeros_like(raypos.permute(0, 3, 1, 2))  # NCHW
+        rayalpha = torch.zeros_like(rayrgb[:, 0:1, :, :])  # NCHW
 
         # raymarch
         done = torch.zeros_like(t).bool()
@@ -96,7 +97,8 @@ class Autoencoder(nn.Module):
                 step = self.dt * torch.exp(self.stepjitter * torch.randn_like(t))
                 done = done | ((t + step) >= tmax)
 
-            contrib = ((rayalpha + sample_alpha[:, :, 0, :, :] * step[:, None, :, :]).clamp(max=1.) - rayalpha) * validf[:, None, :, :]
+            contrib = ((rayalpha + sample_alpha[:, :, 0, :, :] * step[:, None, :, :]).clamp(
+                max=1.) - rayalpha) * validf[:, None, :, :]
 
             rayrgb = rayrgb + sample_rgb[:, :, 0, :, :] * contrib
             rayalpha = rayalpha + contrib
@@ -114,8 +116,8 @@ class Autoencoder(nn.Module):
 
             if pixelcoords.size()[1:3] != image.size()[2:4]:
                 bg = F.grid_sample(
-                        torch.stack([self.bg[self.allcameras[camindex[i].item()]] for i in range(campos.size(0))], dim=0),
-                        samplecoords)
+                    torch.stack([self.bg[self.allcameras[camindex[i].item()]] for i in range(campos.size(0))], dim=0),
+                    samplecoords)
             else:
                 bg = torch.stack([self.bg[self.allcameras[camindex[i].item()]] for i in range(campos.size(0))], dim=0)
 
@@ -129,8 +131,8 @@ class Autoencoder(nn.Module):
         # opacity prior
         if "alphapr" in losslist:
             alphaprior = torch.mean(
-                    torch.log(0.1 + rayalpha.view(rayalpha.size(0), -1)) +
-                    torch.log(0.1 + 1. - rayalpha.view(rayalpha.size(0), -1)) - -2.20727, dim=-1)
+                torch.log(0.1 + rayalpha.view(rayalpha.size(0), -1)) +
+                torch.log(0.1 + 1. - rayalpha.view(rayalpha.size(0), -1)) - -2.20727, dim=-1)
             result["losses"]["alphapr"] = alphaprior
 
         # irgb loss
@@ -151,7 +153,7 @@ class Autoencoder(nn.Module):
             irgbsqerr = weight * (image - rayrgb) ** 2
 
             if "irgbsqerr" in outputlist:
-                result["irgbsqerr"] = rgbsqerr
+                result["irgbsqerr"] = irgbsqerr
 
             if "irgbmse" in losslist:
                 irgbmse = torch.sum(irgbsqerr.view(irgbsqerr.size(0), -1), dim=-1)

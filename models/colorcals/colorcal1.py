@@ -7,8 +7,10 @@
 import torch
 import torch.nn as nn
 
+
 class Colorcal(nn.Module):
     """Apply learnable 3 channel scale and bias to an image to handle un(color)calibrated cameras."""
+
     def __init__(self, allcameras):
         super(Colorcal, self).__init__()
 
@@ -22,4 +24,5 @@ class Colorcal(nn.Module):
             self.conv[k].bias.data.zero_()
 
     def forward(self, image, camindex):
-        return torch.cat([self.conv[self.allcameras[camindex[i].item()]](image[i:i+1, :, :, :]) for i in range(image.size(0))])
+        return torch.cat(
+            [self.conv[self.allcameras[camindex[i].item()]](image[i:i + 1, :, :, :]) for i in range(image.size(0))])
