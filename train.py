@@ -122,6 +122,16 @@ if __name__ == "__main__":
     lossweights = profile.get_loss_weights()
     print("Optimizer instantiated ({:.2f} s)".format(time.time() - starttime))
 
+    # build loss function
+    aeloss = profile.get_loss()
+
+    # lr test
+    """
+    lr_finder = LRFinder(ae, aeoptim, aeloss, device="cuda")
+    lr_finder.range_test(dataloader, end_lr=100, num_iter=100)
+    lr_finder.plot()  # to inspect the loss-learning rate graph
+    """
+
     # train
     starttime = time.time()
     evalpoints = np.geomspace(1., profile.maxiter, 100).astype(np.int32)
@@ -134,9 +144,7 @@ if __name__ == "__main__":
             output = ae(iternum, lossweights.keys(), **{k: x.to(device) for k, x in data.items()})
 
             # compute final loss
-            loss = sum([
-                lossweights[k] * (torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v, tuple) else torch.mean(v))
-                for k, v in output["losses"].items()])
+            loss = aeloss(output, lossweights)
 
             # print current information
             print("Iteration {}: loss = {:.5f}, ".format(iternum, float(loss.item())) +
