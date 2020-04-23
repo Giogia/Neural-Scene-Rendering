@@ -127,8 +127,9 @@ if __name__ == "__main__":
 
     # max lr test
     lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device)
-    lr_finder.range_test(dataloader, end_lr=0.01, num_iter=30)
+    lr_finder.range_test(dataloader, end_lr=0.05, num_iter=30)
     lr_finder.plot()
+    lr_finder.reset()
 
     # train
     starttime = time.time()
