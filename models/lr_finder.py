@@ -96,7 +96,7 @@ class LRFinder(object):
     def reset(self):
         """Restores the model and optimizer to their initial states."""
 
-        self.model.load_state_dict(self.state_cacher.retrieve("model"))
+        self.model.module.load_state_dict(self.state_cacher.retrieve("model"), strict=False)
         self.optimizer.load_state_dict(self.state_cacher.retrieve("optimizer"))
         self.model.to(self.model_device)
 
@@ -363,7 +363,7 @@ class LRFinder(object):
         if fig is not None:
             plt.show()
 
-        fig.savefig(self.cache_dir +'/max_lr_test.png')
+        fig.savefig(self.cache_dir + '/lr_test.png')
 
         return ax
 
