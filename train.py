@@ -71,6 +71,8 @@ if __name__ == "__main__":
     parser.add_argument('--profile', type=str, default="Train", help='config profile')
     parser.add_argument('--devices', type=int, nargs='+', default=[0], help='devices')
     parser.add_argument('--resume', action='store_true', help='resume training')
+    parser.add_argument('--lrtest', action='store_true', help='perform learning rate test')
+
     parsed, unknown = parser.parse_known_args()
     for arg in unknown:
         if arg.startswith(("-", "--")):
@@ -126,10 +128,11 @@ if __name__ == "__main__":
     aeloss = profile.get_loss()
 
     # max lr test
-    lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device, save_dir=outpath)
-    lr_finder.range_test(dataloader, end_lr=0.05, num_iter=3)  # TODO DEBUG VALUE
-    lr_finder.plot()
-    lr_finder.reset()
+    if args.lrtest:
+        lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device, save_dir=outpath)
+        lr_finder.range_test(dataloader, end_lr=0.05, num_iter=3)  # TODO DEBUG VALUE
+        lr_finder.plot()
+        lr_finder.reset()
 
     # train
     starttime = time.time()
