@@ -12,12 +12,13 @@ import os
 import sys
 import time
 
-sys.dont_write_bytecode = True
-
-import torch
 import torch.utils.data
 
+sys.dont_write_bytecode = True
+
 torch.backends.cudnn.benchmark = True  # gotta go fast!
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def import_module(file_path, module_name):
@@ -58,7 +59,7 @@ if __name__ == "__main__":
 
     # build autoencoder
     ae = profile.get_autoencoder(dataset)
-    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to("cuda").eval()
+    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).eval()
 
     # load
     state_dict = ae.module.state_dict()
@@ -77,7 +78,7 @@ if __name__ == "__main__":
             b = next(iter(data.values())).size(0)
 
             # forward
-            output = ae(iternum, [], **{k: x.to("cuda") for k, x in data.items()}, **profile.get_ae_args())
+            output = ae(iternum, [], **{k: x.to(device) for k, x in data.items()}, **profile.get_ae_args())
 
             writer.batch(iternum, itemnum + torch.arange(b), **data, **output)
 

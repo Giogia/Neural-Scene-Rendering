@@ -21,6 +21,8 @@ sys.dont_write_bytecode = True
 
 torch.backends.cudnn.benchmark = True  # gotta go fast!
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class Logger(object):
     """Duplicates all stdout to a file."""
@@ -109,7 +111,7 @@ if __name__ == "__main__":
     # build autoencoder
     starttime = time.time()
     ae = profile.get_autoencoder(dataset)
-    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to("cuda").train()
+    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
     if args.resume:
         ae.module.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)), strict=False)
     print("Autoencoder instantiated ({:.2f} s)".format(time.time() - starttime))
@@ -129,7 +131,7 @@ if __name__ == "__main__":
     for epoch in range(10000):
         for data in dataloader:
             # forward
-            output = ae(iternum, lossweights.keys(), **{k: x.to("cuda") for k, x in data.items()})
+            output = ae(iternum, lossweights.keys(), **{k: x.to(device) for k, x in data.items()})
 
             # compute final loss
             loss = sum([
@@ -154,7 +156,7 @@ if __name__ == "__main__":
             # compute evaluation output
             if iternum in evalpoints:
                 with torch.no_grad():
-                    testoutput = ae(iternum, [], **{k: x.to("cuda") for k, x in testbatch.items()},
+                    testoutput = ae(iternum, [], **{k: x.to(device) for k, x in testbatch.items()},
                                     **progressprof.get_ae_args())
 
                 b = data["campos"].size(0)

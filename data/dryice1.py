@@ -10,6 +10,8 @@ from PIL import Image
 
 import torch.utils.data
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def load_krt(path):
     """Load KRT file containing intrinsic and extrinsic parameters."""
@@ -102,7 +104,7 @@ class Dataset(torch.utils.data.Dataset):
         if "bg" in self.keyfilter:
             for i, cam in enumerate(self.cameras):
                 if cam in self.bg:
-                    bg[cam].data[:] = torch.from_numpy(self.bg[cam]).to("cuda")
+                    bg[cam].data[:] = torch.from_numpy(self.bg[cam]).to(device)
 
     def __len__(self):
         return len(self.framecamlist)
