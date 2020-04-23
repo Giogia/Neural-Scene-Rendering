@@ -74,4 +74,4 @@ venv
 *.pt
 
 # Experiments
-experiments
+experiments/**/*.txt
