@@ -126,7 +126,7 @@ if __name__ == "__main__":
     aeloss = profile.get_loss()
 
     # max lr test
-    lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device)
+    lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device, save_dir=outpath)
     lr_finder.range_test(dataloader, end_lr=0.05, num_iter=3)  # TODO DEBUG VALUE
     lr_finder.plot()
     lr_finder.reset()

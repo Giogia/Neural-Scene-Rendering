@@ -67,6 +67,7 @@ class LRFinder(object):
             device=None,
             memory_cache=True,
             cache_dir=None,
+            save_dir=None
     ):
         # Check if the optimizer is already attached to a scheduler
         self.optimizer = optimizer
@@ -79,6 +80,7 @@ class LRFinder(object):
         self.best_loss = None
         self.memory_cache = memory_cache
         self.cache_dir = cache_dir
+        self.save_dir = save_dir
 
         # Save the original state of the model and optimizer so they can be restored if
         # needed
@@ -363,7 +365,7 @@ class LRFinder(object):
         if fig is not None:
             plt.show()
 
-        fig.savefig(self.cache_dir + '/lr_test.png')
+        fig.savefig(self.save_dir + '/lr_test.png')
 
         return ax
 
