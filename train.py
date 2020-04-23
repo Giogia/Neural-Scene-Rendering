@@ -15,7 +15,7 @@ import time
 
 import numpy as np
 import torch.utils.data
-# from models.lr_finder import LRFinder
+from models.lr_finder import LRFinder
 
 sys.dont_write_bytecode = True
 
@@ -125,12 +125,10 @@ if __name__ == "__main__":
     # build loss function
     aeloss = profile.get_loss()
 
-    # lr test
-    """
-    lr_finder = LRFinder(ae, aeoptim, aeloss, device="cuda")
-    lr_finder.range_test(dataloader, end_lr=100, num_iter=100)
+    # max lr test
+    lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device)
+    lr_finder.range_test(dataloader, end_lr=1, num_iter=30)
     lr_finder.plot()  # to inspect the loss-learning rate graph
-    """
 
     # train
     starttime = time.time()
@@ -140,6 +138,7 @@ if __name__ == "__main__":
 
     for epoch in range(10000):
         for data in dataloader:
+
             # forward
             output = ae(lossweights.keys(), **{k: x.to(device) for k, x in data.items()})
 

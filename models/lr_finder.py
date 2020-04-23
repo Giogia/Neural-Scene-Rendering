@@ -59,13 +59,14 @@ class LRFinder(object):
     """
 
     def __init__(
-        self,
-        model,
-        optimizer,
-        criterion,
-        device=None,
-        memory_cache=True,
-        cache_dir=None,
+            self,
+            model,
+            optimizer,
+            criterion,
+            lossweights,
+            device=None,
+            memory_cache=True,
+            cache_dir=None,
     ):
         # Check if the optimizer is already attached to a scheduler
         self.optimizer = optimizer
@@ -73,6 +74,7 @@ class LRFinder(object):
 
         self.model = model
         self.criterion = criterion
+        self.lossweights = lossweights
         self.history = {"lr": [], "loss": []}
         self.best_loss = None
         self.memory_cache = memory_cache
@@ -99,16 +101,16 @@ class LRFinder(object):
         self.model.to(self.model_device)
 
     def range_test(
-        self,
-        train_loader,
-        val_loader=None,
-        start_lr=None,
-        end_lr=10,
-        num_iter=100,
-        step_mode="exp",
-        smooth_f=0.05,
-        diverge_th=5,
-        accumulation_steps=1,
+            self,
+            train_loader,
+            val_loader=None,
+            start_lr=None,
+            end_lr=10,
+            num_iter=100,
+            step_mode="exp",
+            smooth_f=0.05,
+            diverge_th=5,
+            accumulation_steps=1,
     ):
         """Performs the learning rate range test.
 
@@ -233,12 +235,13 @@ class LRFinder(object):
 
         self.optimizer.zero_grad()
         for i in range(accumulation_steps):
-            inputs, labels = next(iter_wrapper)
-            inputs, labels = self._move_to_device(inputs, labels)
+
+            inputs = next(iter_wrapper)
+            # inputs = self._move_to_device(inputs)
 
             # Forward pass
-            outputs = self.model(inputs)
-            loss = self.criterion(outputs, labels)
+            outputs = self.model(self.lossweights.keys(), **{k: x.to(self.device) for k, x in inputs.items()})
+            loss = self.criterion(outputs, self.lossweights)
 
             # Loss should be averaged in each step
             loss /= accumulation_steps
@@ -250,7 +253,7 @@ class LRFinder(object):
                 delay_unscale = ((i + 1) % accumulation_steps) != 0
 
                 with amp.scale_loss(
-                    loss, self.optimizer, delay_unscale=delay_unscale
+                        loss, self.optimizer, delay_unscale=delay_unscale
                 ) as scaled_loss:
                     scaled_loss.backward()
             else:
@@ -265,7 +268,7 @@ class LRFinder(object):
 
         return total_loss.item()
 
-    def _move_to_device(self, inputs, labels):
+    def _move_to_device(self, inputs):
         def move(obj, device):
             if hasattr(obj, "to"):
                 return obj.to(device)
@@ -279,17 +282,16 @@ class LRFinder(object):
                 return obj
 
         inputs = move(inputs, self.device)
-        labels = move(labels, self.device)
-        return inputs, labels
+        return inputs
 
     def _validate(self, dataloader):
         # Set model to evaluation mode and disable gradient computation
         running_loss = 0
         self.model.eval()
         with torch.no_grad():
-            for inputs, labels, *_ in dataloader:
+            for inputs, *_ in dataloader:
                 # Move data to the correct device
-                inputs, labels = self._move_to_device(inputs, labels)
+                inputs = self._move_to_device(inputs)
 
                 if isinstance(inputs, tuple) or isinstance(inputs, list):
                     batch_size = inputs[0].size(0)
@@ -297,8 +299,8 @@ class LRFinder(object):
                     batch_size = inputs.size(0)
 
                 # Forward pass and loss computation
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels)
+                outputs = self.model(self.lossweights.keys(), **{k: x.to(self.device) for k, x in inputs.items()})
+                loss = self.criterion(outputs, self.lossweights)
                 running_loss += loss.item() * batch_size
 
         return running_loss / len(dataloader.dataset)
@@ -468,13 +470,13 @@ class DataLoaderIterWrapper(object):
         self._iterator = iter(data_loader)
 
     def __next__(self):
-        # Get a new set of inputs and labels
+        # Get a new set of inputs
         try:
-            inputs, labels, *_ = next(self._iterator)
+            inputs = next(self._iterator)
         except StopIteration:
             if not self.auto_reset:
                 raise
             self._iterator = iter(self.data_loader)
-            inputs, labels, *_ = next(self._iterator)
+            inputs = next(self._iterator)
 
-        return inputs, labels
+        return inputs
