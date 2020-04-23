@@ -38,6 +38,11 @@ def get_autoencoder(dataset):
         4. / 256)
 
 
+def get_loss():
+    import models.losses.aeloss as loss
+    return loss.AutoencoderLoss()
+
+
 # profiles
 # A profile is instantiated by the training or evaluation scripts
 # and controls how the dataset and autoencoder is created
@@ -61,6 +66,8 @@ class Train():
 
     def get_loss_weights(self):
         return {"irgbmse": 1.0, "kldiv": 0.001, "alphapr": 0.01, "tvl1": 0.01}
+
+    def get_loss(self): return get_loss()
 
 
 class ProgressWriter():
