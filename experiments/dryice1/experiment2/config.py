@@ -62,7 +62,7 @@ class Train():
             [{"params": x} for x in ae.encoder.parameters()],
             [{"params": x} for x in ae.decoder.parameters()],
             [{"params": x} for x in ae.colorcal.parameters()])
-        return torch.optim.Adam(aeparams, lr=lr, betas=(0.9, 0.999))
+        return torch.optim.AdamW(aeparams, lr=lr, betas=(0.9, 0.999))
 
     def get_loss_weights(self):
         return {"irgbmse": 1.0, "kldiv": 0.001, "alphapr": 0.01, "tvl1": 0.01}
