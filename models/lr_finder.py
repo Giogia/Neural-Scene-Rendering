@@ -363,7 +363,7 @@ class LRFinder(object):
         if fig is not None:
             plt.show()
 
-        fig.savefig('max_lr_test.png')
+        fig.savefig(self.cache_dir +'/max_lr_test.png')
 
         return ax
 
