@@ -128,7 +128,7 @@ if __name__ == "__main__":
     # max lr test
     lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device)
     lr_finder.range_test(dataloader, end_lr=1, num_iter=30)
-    lr_finder.plot()  # to inspect the loss-learning rate graph
+    lr_finder.plot()
 
     # train
     starttime = time.time()

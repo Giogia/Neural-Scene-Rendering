@@ -362,6 +362,7 @@ class LRFinder(object):
         # Show only if the figure was created internally
         if fig is not None:
             plt.show()
+            plt.savefig('max_lr_test.png')
 
         return ax
 
