@@ -40,7 +40,7 @@ class Autoencoder(nn.Module):
                 del ret[prefix + "bg." + k]
         return ret
 
-    def forward(self, iternum, losslist, camrot, campos, focal, princpt, pixelcoords, validinput,
+    def forward(self, losslist, camrot, campos, focal, princpt, pixelcoords, validinput,
                 fixedcamimage=None, encoding=None, keypoints=None, camindex=None,
                 image=None, imagevalid=None, viewtemplate=False,
                 outputlist=[]):

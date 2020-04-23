@@ -141,7 +141,7 @@ if __name__ == "__main__":
     for epoch in range(10000):
         for data in dataloader:
             # forward
-            output = ae(iternum, lossweights.keys(), **{k: x.to(device) for k, x in data.items()})
+            output = ae(lossweights.keys(), **{k: x.to(device) for k, x in data.items()})
 
             # compute final loss
             loss = aeloss(output, lossweights)
@@ -164,7 +164,7 @@ if __name__ == "__main__":
             # compute evaluation output
             if iternum in evalpoints:
                 with torch.no_grad():
-                    testoutput = ae(iternum, [], **{k: x.to(device) for k, x in testbatch.items()},
+                    testoutput = ae([], **{k: x.to(device) for k, x in testbatch.items()},
                                     **progressprof.get_ae_args())
 
                 b = data["campos"].size(0)
