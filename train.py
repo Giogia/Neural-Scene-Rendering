@@ -120,7 +120,7 @@ if __name__ == "__main__":
 
     # build optimizer
     starttime = time.time()
-    aeoptim = profile.get_optimizer(ae.module)
+    aeoptim = profile.get_optimizer(ae)
     lossweights = profile.get_loss_weights()
     print("Optimizer instantiated ({:.2f} s)".format(time.time() - starttime))
 
@@ -128,14 +128,15 @@ if __name__ == "__main__":
     aeloss = profile.get_loss()
 
     # mixed precision training
-    ae, aeoptim = amp.initialize(ae, aeoptim, opt_level='O1')
+    if device == 'cuda':
+        ae, aeoptim = amp.initialize(ae, aeoptim, opt_level='O1')
+
     ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
 
     print(aeoptim.param_groups[0]["lr"])  # TODO debug
 
     # max lr test
     if args.lrtest:
-
         lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device, save_dir=outpath)
         lr_finder.range_test(dataloader, end_lr=0.05, num_iter=3)  # TODO DEBUG VALUE
         lr_finder.plot()
