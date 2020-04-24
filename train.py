@@ -133,16 +133,12 @@ if __name__ == "__main__":
 
     ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
 
-    print(aeoptim.param_groups[0]["lr"])  # TODO debug
-
     # max lr test
     if args.lrtest:
         lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device, save_dir=outpath)
-        lr_finder.range_test(dataloader, end_lr=0.05, num_iter=3)  # TODO DEBUG VALUE
+        lr_finder.range_test(dataloader, end_lr=0.05, num_iter=100)
         lr_finder.plot()
         lr_finder.reset()
-
-    print(aeoptim.param_groups[0]["lr"])  # TODO debug
 
     # train
     starttime = time.time()
