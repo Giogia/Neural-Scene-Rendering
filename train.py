@@ -15,7 +15,6 @@ import time
 
 import numpy as np
 import torch.utils.data
-from apex import amp
 from models.lr_finder import LRFinder
 
 sys.dont_write_bytecode = True
@@ -114,6 +113,7 @@ if __name__ == "__main__":
     # build autoencoder
     starttime = time.time()
     ae = profile.get_autoencoder(dataset)
+    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
     if args.resume:
         ae.module.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)), strict=False)
     print("Autoencoder instantiated ({:.2f} s)".format(time.time() - starttime))
@@ -127,15 +127,11 @@ if __name__ == "__main__":
     # build loss function
     aeloss = profile.get_loss()
 
-    # mixed precision training
-    ae, aeoptim = amp.initialize(ae, aeoptim, opt_level='O1')
-    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
+    # max lr test
 
     print(aeoptim.param_groups[0]["lr"])  # TODO debug
 
-    # max lr test
     if args.lrtest:
-
         lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device, save_dir=outpath)
         lr_finder.range_test(dataloader, end_lr=0.05, num_iter=3)  # TODO DEBUG VALUE
         lr_finder.plot()
