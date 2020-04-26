@@ -73,5 +73,8 @@ venv
 # Pytorch
 *.pt
 
-# Experiments logs
-experiments/**/log.txt
+# Experiments
+/experiments/**/*.txt
+
+# Debug file
+run.py
