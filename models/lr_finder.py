@@ -100,7 +100,7 @@ class LRFinder(object):
 
         self.model.module.load_state_dict(self.state_cacher.retrieve("model"), strict=False)
         self.optimizer.load_state_dict(self.state_cacher.retrieve("optimizer"))
-        self.model = torch.nn.DataParallel(self.model, device_ids=self.model_device).to(self.model_device).train()
+        self.model = torch.nn.DataParallel(self.model, device_ids=[0]).to(self.model_device).train()
 
     def range_test(
             self,
