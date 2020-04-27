@@ -140,7 +140,7 @@ if __name__ == "__main__":
 
     if args.lrtest:
         lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
-        lr_finder.range_test(dataloader, end_lr=10*max_lr, num_iter=10)
+        lr_finder.range_test(dataloader, end_lr=10*max_lr, num_iter=100)
         lr_finder.plot()
         lr_finder.reset()
 
@@ -164,8 +164,6 @@ if __name__ == "__main__":
 
             # compute final loss
             loss = ae_loss(output, loss_weights)
-
-            print('LOSS:', loss.item(), 'PREVLOSS:', prevloss)
 
             # print current information
             print("Iteration {}: loss = {:.5f}, ".format(iternum, float(loss.item())) +
