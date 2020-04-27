@@ -136,14 +136,19 @@ if __name__ == "__main__":
         ae, ae_optimizer = amp.initialize(ae, ae_optimizer, opt_level='O1')
 
     # super convergence
+    max_lr = 4e-3
+
     if args.lrtest:
         lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
-        lr_finder.range_test(dataloader, end_lr=0.05, num_iter=30)
+        lr_finder.range_test(dataloader, end_lr=10*max_lr, num_iter=10)
         lr_finder.plot()
         lr_finder.reset()
 
+        max_lr = 0.9 * lr_finder.max_lr() if 0.9 * lr_finder.max_lr() > max_lr else max_lr
+        print("Max learning rate set to {:.5f}".format(max_lr()))
+
     scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer,
-                                                    max_lr=4e-3, epochs=1000, steps_per_epoch=len(dataloader))
+                                                    max_lr=max_lr, epochs=1000, steps_per_epoch=len(dataloader))
 
     # train
     start_time = time.time()

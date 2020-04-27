@@ -371,6 +371,15 @@ class LRFinder(object):
 
         return ax
 
+    def max_lr(self):
+
+        lrs = self.history["lr"]
+        losses = self.history["loss"]
+
+        min_loss = min(losses)
+
+        return lrs[losses.index(min_loss)]
+
 
 class LinearLR(_LRScheduler):
     """Linearly increases the learning rate between two boundaries over a number of
