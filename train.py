@@ -135,27 +135,15 @@ if __name__ == "__main__":
     if args.mpt and device == 'cuda':
         ae, ae_optimizer = amp.initialize(ae, ae_optimizer, opt_level='O1')
 
-    # max lr test
+    # super convergence
     if args.lrtest:
         lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
-        lr_finder.range_test(dataloader, end_lr=0.05, num_iter=1)
+        lr_finder.range_test(dataloader, end_lr=0.05, num_iter=30)
         lr_finder.plot()
         lr_finder.reset()
 
-    ae2 = profile.get_autoencoder(dataset)
-    ae2 = torch.nn.DataParallel(ae2, device_ids=args.devices).to(device).train()
-
-    lr = [param.data for name, param in ae.module.named_parameters()]
-    lr2 = [param.data for name, param in ae2.module.named_parameters()]
-
-    names = [name for name, param in ae.module.named_parameters()]
-
-    for i in range(0, len(lr)):
-        if not torch.all(torch.eq(lr[i], lr2[i])):
-            print(names[i])
-
-    # ae = profile.get_autoencoder(dataset)
-    # ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer,
+                                                    max_lr=4e-3, epochs=1000, steps_per_epoch=len(dataloader))
 
     # train
     start_time = time.time()
@@ -163,7 +151,7 @@ if __name__ == "__main__":
     iternum = log.iternum
     prevloss = np.inf
 
-    for epoch in range(10000):
+    for epoch in range(1000):
         for data in dataloader:
 
             # forward
@@ -202,6 +190,7 @@ if __name__ == "__main__":
             ae_optimizer.zero_grad()
             loss.backward()
             ae_optimizer.step()
+            scheduler.step()
 
             # check for loss explosion
             if loss.item() > 20 * prevloss or not np.isfinite(loss.item()):
