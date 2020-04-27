@@ -3,7 +3,8 @@ Python 3.7.4 (default, Sep 28 2019, 16:39:19)
 PyTorch 1.5.0
 train.py experiments/dryice1/experiment2/config.py --lrtest
 Output path: experiments/dryice1/experiment2
-Config loaded (0.01 s)
-Dataset instantiated (1.31 s)
+Config loaded (0.00 s)
+Dataset instantiated (1.54 s)
 Writer instantiated (0.00 s)
-Autoencoder instantiated (2.31 s)
+Autoencoder instantiated (2.14 s)
+Optimizer instantiated (0.01 s)
