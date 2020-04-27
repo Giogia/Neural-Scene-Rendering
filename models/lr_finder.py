@@ -98,8 +98,8 @@ class LRFinder(object):
     def reset(self):
         """Restores the model and optimizer to their initial states."""
 
-        self.model.module.load_state_dict(self.state_cacher.retrieve("model"), strict=False)
-        self.optimizer.module.load_state_dict(self.state_cacher.retrieve("optimizer"), strict=False)
+        self.model.load_state_dict(self.state_cacher.retrieve("model"))
+        self.optimizer.load_state_dict(self.state_cacher.retrieve("optimizer"))
         self.model.to(self.model_device)
 
     def range_test(

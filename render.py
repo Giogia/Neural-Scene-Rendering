@@ -58,15 +58,15 @@ if __name__ == "__main__":
     writer = profile.get_writer()
 
     # build autoencoder
-    ae = profile.get_autoencoder(dataset)
-    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).eval()
+    ae = profile.get_autoencoder(dataset).to(device).eval()
+    # ae = torch.nn.DataParallel(ae, device_ids=args.devices)
 
     # load
-    state_dict = ae.module.state_dict()
+    state_dict = ae.state_dict()
     trained_state_dict = torch.load("{}/aeparams.pt".format(outpath))
     trained_state_dict = {k: v for k, v in trained_state_dict.items() if k in state_dict}
     state_dict.update(trained_state_dict)
-    ae.module.load_state_dict(state_dict, strict=False)
+    ae.load_state_dict(state_dict)
 
     # eval
     iternum = 0

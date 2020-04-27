@@ -115,7 +115,8 @@ if __name__ == "__main__":
     starttime = time.time()
     ae = profile.get_autoencoder(dataset)
     if args.resume:
-        ae.module.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)), strict=False)
+        ae.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)))
+    ae.to(device).train()
     print("Autoencoder instantiated ({:.2f} s)".format(time.time() - starttime))
 
     # build optimizer
@@ -127,16 +128,14 @@ if __name__ == "__main__":
     # build loss function
     aeloss = profile.get_loss()
 
-    # mixed precision training
+    # GPU optimization - mixed precision training
     if device == 'cuda':
         ae, aeoptim = amp.initialize(ae, aeoptim, opt_level='O1')
-
-    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
 
     # max lr test
     if args.lrtest:
         lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device, save_dir=outpath)
-        lr_finder.range_test(dataloader, end_lr=0.05, num_iter=10)
+        lr_finder.range_test(dataloader, end_lr=0.05, num_iter=1)
         lr_finder.plot()
         lr_finder.reset()
 
@@ -154,6 +153,8 @@ if __name__ == "__main__":
 
             # compute final loss
             loss = aeloss(output, lossweights)
+
+            print('LOSS:', loss.item(), 'PREVLOSS:', prevloss)
 
             # print current information
             print("Iteration {}: loss = {:.5f}, ".format(iternum, float(loss.item())) +
@@ -184,20 +185,18 @@ if __name__ == "__main__":
             loss.backward()
             aeoptim.step()
 
-            print('LOSS:', loss, 'PREVLOSS:', prevloss)
-
             # check for loss explosion
             if loss.item() > 20 * prevloss or not np.isfinite(loss.item()):
                 print("Unstable loss function; resetting")
 
-                ae.module.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)), strict=False)
-                aeoptim = profile.get_optimizer(ae.module)
+                ae.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)))
+                aeoptim = profile.get_optimizer(ae)
 
             prevloss = loss.item()
 
             # save intermediate results
             if iternum % 10 == 0:
-                torch.save(ae.module.state_dict(), "{}/aeparams.pt".format(outpath))
+                torch.save(ae.state_dict(), "{}/aeparams.pt".format(outpath))
 
             iternum += 1
 
