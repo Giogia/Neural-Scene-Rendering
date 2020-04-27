@@ -145,7 +145,7 @@ if __name__ == "__main__":
         lr_finder.reset()
 
         max_lr = 0.9 * lr_finder.max_lr() if 0.9 * lr_finder.max_lr() > max_lr else max_lr
-        print("Max learning rate set to {:.5f}".format(max_lr()))
+        print("Max learning rate set to {:.5f}".format(max_lr))
 
     scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer,
                                                     max_lr=max_lr, epochs=1000, steps_per_epoch=len(dataloader))
