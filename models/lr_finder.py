@@ -84,9 +84,9 @@ class LRFinder(object):
 
         # Save the original state of the model and optimizer so they can be restored if
         # needed
-        self.model_device = next(self.model.parameters()).device
+        self.model_device = next(self.model.module.parameters()).device
         self.state_cacher = StateCacher(memory_cache, cache_dir=cache_dir)
-        self.state_cacher.store("model", self.model.state_dict())
+        self.state_cacher.store("model", self.model.module.state_dict())
         self.state_cacher.store("optimizer", self.optimizer.state_dict())
 
         # If device is None, use the same as the model
@@ -98,9 +98,9 @@ class LRFinder(object):
     def reset(self):
         """Restores the model and optimizer to their initial states."""
 
-        self.model.load_state_dict(self.state_cacher.retrieve("model"))
+        self.model.module.load_state_dict(self.state_cacher.retrieve("model"), strict=False)
         self.optimizer.load_state_dict(self.state_cacher.retrieve("optimizer"))
-        self.model.to(self.model_device)
+        self.model = torch.nn.DataParallel(self.model, device_ids=self.model_device).to(self.model_device).train()
 
     def range_test(
             self,
@@ -160,6 +160,8 @@ class LRFinder(object):
         [thomwolf/gradient_accumulation](https://gist.github.com/thomwolf/ac7a7da6b1888c2eeac8ac8b9b05d3d3)
         """
 
+        print("Starting learning rate search")
+
         # Reset test results
         self.history = {"lr": [], "loss": []}
         self.best_loss = None
@@ -212,7 +214,7 @@ class LRFinder(object):
                 print("Stopping early, the loss has diverged")
                 break
 
-        print("Learning rate search finished. See the graph with {finder_name}.plot()")
+        print("Learning rate search finished")
 
     def _set_learning_rate(self, new_lrs):
         if not isinstance(new_lrs, list):

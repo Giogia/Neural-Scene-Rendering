@@ -73,6 +73,7 @@ if __name__ == "__main__":
     parser.add_argument('--devices', type=int, nargs='+', default=[0], help='devices')
     parser.add_argument('--resume', action='store_true', help='resume training')
     parser.add_argument('--lrtest', action='store_true', help='perform learning rate test')
+    parser.add_argument('--mpt', action='store_true', help='enable mixed precision training')
 
     parsed, unknown = parser.parse_known_args()
     for arg in unknown:
@@ -88,14 +89,14 @@ if __name__ == "__main__":
     print("Output path:", outpath)
 
     # load config
-    starttime = time.time()
+    start_time = time.time()
     experconfig = import_module(args.experconfig, "config")
     profile = getattr(experconfig, args.profile)(**{k: v for k, v in vars(args).items() if k not in parsed})
     progressprof = experconfig.Progress()
-    print("Config loaded ({:.2f} s)".format(time.time() - starttime))
+    print("Config loaded ({:.2f} s)".format(time.time() - start_time))
 
     # build dataset & testing dataset
-    starttime = time.time()
+    start_time = time.time()
     testdataset = progressprof.get_dataset()
     dataloader = torch.utils.data.DataLoader(testdataset, batch_size=progressprof.batchsize, shuffle=False,
                                              drop_last=True, num_workers=0)
@@ -104,43 +105,60 @@ if __name__ == "__main__":
     dataset = profile.get_dataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=profile.batchsize, shuffle=True, drop_last=True,
                                              num_workers=16)
-    print("Dataset instantiated ({:.2f} s)".format(time.time() - starttime))
+    print("Dataset instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # data writer
-    starttime = time.time()
+    start_time = time.time()
     writer = progressprof.get_writer()
-    print("Writer instantiated ({:.2f} s)".format(time.time() - starttime))
+    print("Writer instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build autoencoder
-    starttime = time.time()
+    start_time = time.time()
     ae = profile.get_autoencoder(dataset)
+    ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
     if args.resume:
-        ae.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)))
-    ae.to(device).train()
-    print("Autoencoder instantiated ({:.2f} s)".format(time.time() - starttime))
+        ae.module.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)), strict=False)
+    print("Autoencoder instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build optimizer
-    starttime = time.time()
-    aeoptim = profile.get_optimizer(ae)
-    lossweights = profile.get_loss_weights()
-    print("Optimizer instantiated ({:.2f} s)".format(time.time() - starttime))
+    start_time = time.time()
+    ae_optimizer = profile.get_optimizer(ae.module)
+    loss_weights = profile.get_loss_weights()
+    print("Optimizer instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build loss function
-    aeloss = profile.get_loss()
+    start_time = time.time()
+    ae_loss = profile.get_loss()
+    print("Loss instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # GPU optimization - mixed precision training
-    if device == 'cuda':
-        ae, aeoptim = amp.initialize(ae, aeoptim, opt_level='O1')
+    if args.mpt and device == 'cuda':
+        ae, ae_optimizer = amp.initialize(ae, ae_optimizer, opt_level='O1')
 
     # max lr test
     if args.lrtest:
-        lr_finder = LRFinder(ae, aeoptim, aeloss, lossweights, device=device, save_dir=outpath)
+        lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
         lr_finder.range_test(dataloader, end_lr=0.05, num_iter=1)
         lr_finder.plot()
         lr_finder.reset()
 
+    ae2 = profile.get_autoencoder(dataset)
+    ae2 = torch.nn.DataParallel(ae2, device_ids=args.devices).to(device).train()
+
+    lr = [param.data for name, param in ae.module.named_parameters()]
+    lr2 = [param.data for name, param in ae2.module.named_parameters()]
+
+    names = [name for name, param in ae.module.named_parameters()]
+
+    for i in range(0, len(lr)):
+        if not torch.all(torch.eq(lr[i], lr2[i])):
+            print(names[i])
+
+    # ae = profile.get_autoencoder(dataset)
+    # ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
+
     # train
-    starttime = time.time()
+    start_time = time.time()
     evalpoints = np.geomspace(1., profile.maxiter, 100).astype(np.int32)
     iternum = log.iternum
     prevloss = np.inf
@@ -149,10 +167,10 @@ if __name__ == "__main__":
         for data in dataloader:
 
             # forward
-            output = ae(lossweights.keys(), **{k: x.to(device) for k, x in data.items()})
+            output = ae(loss_weights.keys(), **{k: x.to(device) for k, x in data.items()})
 
             # compute final loss
-            loss = aeloss(output, lossweights)
+            loss = ae_loss(output, loss_weights)
 
             print('LOSS:', loss.item(), 'PREVLOSS:', prevloss)
 
@@ -165,9 +183,9 @@ if __name__ == "__main__":
                              for k, v in output["losses"].items()]), end="")
             if iternum % 10 == 0:
                 endtime = time.time()
-                ips = 10. / (endtime - starttime)
+                ips = 10. / (endtime - start_time)
                 print(", iter/sec = {:.2f}".format(ips))
-                starttime = time.time()
+                start_time = time.time()
             else:
                 print()
 
@@ -181,22 +199,22 @@ if __name__ == "__main__":
                 writer.batch(iternum, iternum * profile.batchsize + torch.arange(b), **testbatch, **testoutput)
 
             # update parameters
-            aeoptim.zero_grad()
+            ae_optimizer.zero_grad()
             loss.backward()
-            aeoptim.step()
+            ae_optimizer.step()
 
             # check for loss explosion
             if loss.item() > 20 * prevloss or not np.isfinite(loss.item()):
                 print("Unstable loss function; resetting")
 
-                ae.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)))
-                aeoptim = profile.get_optimizer(ae)
+                ae.module.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)), strict=False)
+                ae_optimizer = profile.get_optimizer(ae.module)
 
             prevloss = loss.item()
 
             # save intermediate results
             if iternum % 10 == 0:
-                torch.save(ae.state_dict(), "{}/aeparams.pt".format(outpath))
+                torch.save(ae.module.state_dict(), "{}/aeparams.pt".format(outpath))
 
             iternum += 1
 
