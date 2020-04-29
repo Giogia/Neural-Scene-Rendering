@@ -9,7 +9,6 @@ import argparse
 import importlib
 import importlib.util
 import os
-import re
 import sys
 import time
 
@@ -33,16 +32,10 @@ class Logger(object):
             print(path + " exists")
             sys.exit(0)
 
-        iternum = 0
         if resume:
-            with open(path, "r") as f:
-                for line in f.readlines():
-                    match = re.search("Iteration (\d+).* ", line)
-                    if match is not None:
-                        it = int(match.group(1))
-                        if it > iternum:
-                            iternum = it
-        self.iternum = iternum
+            self.iteration_number = torch.load("{}/checkpoint.pt".format(outpath))['epoch']
+        else:
+            self.iteration_number = 0
 
         self.log = open(path, "a") if resume else open(path, "w")
         self.stdout = sys.stdout
@@ -90,17 +83,17 @@ if __name__ == "__main__":
 
     # load config
     start_time = time.time()
-    experconfig = import_module(args.experconfig, "config")
-    profile = getattr(experconfig, args.profile)(**{k: v for k, v in vars(args).items() if k not in parsed})
-    progressprof = experconfig.Progress()
+    experiment_config = import_module(args.experconfig, "config")
+    profile = getattr(experiment_config, args.profile)(**{k: v for k, v in vars(args).items() if k not in parsed})
+    progress_prof = experiment_config.Progress()
     print("Config loaded ({:.2f} s)".format(time.time() - start_time))
 
     # build dataset & testing dataset
     start_time = time.time()
-    testdataset = progressprof.get_dataset()
-    dataloader = torch.utils.data.DataLoader(testdataset, batch_size=progressprof.batchsize, shuffle=False,
+    test_dataset = progress_prof.get_dataset()
+    dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=progress_prof.batchsize, shuffle=False,
                                              drop_last=True, num_workers=0)
-    for testbatch in dataloader:
+    for test_batch in dataloader:
         break
     dataset = profile.get_dataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=profile.batchsize, shuffle=True, drop_last=True,
@@ -109,7 +102,7 @@ if __name__ == "__main__":
 
     # data writer
     start_time = time.time()
-    writer = progressprof.get_writer()
+    writer = progress_prof.get_writer()
     print("Writer instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build autoencoder
@@ -117,13 +110,17 @@ if __name__ == "__main__":
     ae = profile.get_autoencoder(dataset)
     ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
     if args.resume:
-        ae.module.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)), strict=False)
+        checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
+        ae.module.load_state_dict(checkpoint['model'], strict=False)
     print("Autoencoder instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build optimizer
     start_time = time.time()
     ae_optimizer = profile.get_optimizer(ae.module)
     loss_weights = profile.get_loss_weights()
+    if args.resume:
+        checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
+        ae_optimizer.load_state_dict(checkpoint['optimizer'])
     print("Optimizer instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build loss function
@@ -137,26 +134,31 @@ if __name__ == "__main__":
 
     # super convergence
     max_lr = 4e-3
-
     if args.lrtest:
         lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
-        lr_finder.range_test(dataloader, end_lr=10*max_lr, num_iter=100)
+        lr_finder.range_test(dataloader, end_lr=10 * max_lr, num_iter=100)
         lr_finder.plot()
         lr_finder.reset()
-
         max_lr = 0.9 * lr_finder.max_lr() if 0.9 * lr_finder.max_lr() > max_lr else max_lr
         print("Max learning rate set to {:.5f}".format(max_lr))
 
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer,
-                                                    max_lr=max_lr, epochs=1000, steps_per_epoch=len(dataloader))
+    # build scheduler
+    start_time = time.time()
+    if args.resume:
+        checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
+        scheduler = checkpoint['scheduler']
+    else:
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer,
+                                                        max_lr=max_lr, epochs=10000, steps_per_epoch=len(dataloader))
+    print("Scheduler instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # train
     start_time = time.time()
-    evalpoints = np.geomspace(1., profile.maxiter, 100).astype(np.int32)
-    iternum = log.iternum
+    eval_points = np.geomspace(1., profile.maxiter, 100).astype(np.int32)
+    iter_num = log.iteration_number
     prevloss = np.inf
 
-    for epoch in range(1000):
+    for epoch in range(10000):
         for data in dataloader:
 
             # forward
@@ -166,28 +168,29 @@ if __name__ == "__main__":
             loss = ae_loss(output, loss_weights)
 
             # print current information
-            print("Iteration {}: loss = {:.5f}, ".format(iternum, float(loss.item())) +
+            print("Iteration {}: lr = {:.5f}, ".format(iter_num, ae_optimizer.param_groups[0]['lr']) +
+                  "loss = {:.5f}, ".format(float(loss.item())) +
                   ", ".join(["{} = {:.5f}".format(k,
                                                   float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v,
                                                                                                         tuple) else torch.mean(
                                                       v)))
                              for k, v in output["losses"].items()]), end="")
-            if iternum % 10 == 0:
-                endtime = time.time()
-                ips = 10. / (endtime - start_time)
+            if iter_num % 10 == 0:
+                end_time = time.time()
+                ips = 10. / (end_time - start_time)
                 print(", iter/sec = {:.2f}".format(ips))
                 start_time = time.time()
             else:
                 print()
 
             # compute evaluation output
-            if iternum in evalpoints:
+            if iter_num in eval_points:
                 with torch.no_grad():
-                    testoutput = ae([], **{k: x.to(device) for k, x in testbatch.items()},
-                                    **progressprof.get_ae_args())
+                    test_output = ae([], **{k: x.to(device) for k, x in test_batch.items()},
+                                     **progress_prof.get_ae_args())
 
                 b = data["campos"].size(0)
-                writer.batch(iternum, iternum * profile.batchsize + torch.arange(b), **testbatch, **testoutput)
+                writer.batch(iter_num, iter_num * profile.batchsize + torch.arange(b), **test_batch, **test_output)
 
             # update parameters
             ae_optimizer.zero_grad()
@@ -199,18 +202,26 @@ if __name__ == "__main__":
             if loss.item() > 20 * prevloss or not np.isfinite(loss.item()):
                 print("Unstable loss function; resetting")
 
-                ae.module.load_state_dict(torch.load("{}/aeparams.pt".format(outpath)), strict=False)
-                ae_optimizer = profile.get_optimizer(ae.module)
+                checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
+
+                ae.module.load_state_dict(checkpoint['model'], strict=False)
+                ae_optimizer.load_state_dict(checkpoint['optimizer'])
+                scheduler = checkpoint['scheduler']
 
             prevloss = loss.item()
 
             # save intermediate results
-            if iternum % 10 == 0:
-                torch.save(ae.module.state_dict(), "{}/aeparams.pt".format(outpath))
+            if iter_num % 10 == 0:
+                checkpoint = {
+                    'epoch': epoch,
+                    'model': ae.module.state_dict(),
+                    'optimizer': ae_optimizer.state_dict(),
+                    'scheduler': scheduler}
+                torch.save(checkpoint, "{}/checkpoint.pt".format(outpath))
 
-            iternum += 1
+            iter_num += 1
 
-        if iternum >= profile.maxiter:
+        if iter_num >= profile.maxiter:
             break
 
     # cleanup

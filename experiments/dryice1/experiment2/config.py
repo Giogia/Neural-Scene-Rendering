@@ -8,17 +8,17 @@ import os
 import data.dryice1 as datamodel
 
 
-def get_dataset(camerafilter=lambda x: True, maxframes=-1, subsampletype=None):
+def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None):
     return datamodel.Dataset(
-        camerafilter=camerafilter,
-        framelist=[i for i in range(15469, 16578, 3)][:maxframes],
+        camerafilter=camera_filter,
+        framelist=[i for i in range(15469, 16578, 3)][:max_frames],
         keyfilter=["bg", "fixedcamimage", "camera", "image", "pixelcoords"],
         fixedcameras=["400007", "400010", "400018"],
         fixedcammean=100.,
         fixedcamstd=25.,
         imagemean=100.,
         imagestd=25.,
-        subsampletype=subsampletype,
+        subsampletype=subsample_type,
         subsamplesize=128,
         worldscale=1. / 256)
 
@@ -52,7 +52,7 @@ class Train():
 
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
 
-    def get_dataset(self): return get_dataset(subsampletype="random2")
+    def get_dataset(self): return get_dataset(subsample_type="random2")
 
     def get_optimizer(self, ae):
         import itertools
@@ -96,7 +96,7 @@ class Progress():
 
     def get_ae_args(self): return dict(outputlist=["irgbrec"])
 
-    def get_dataset(self): return get_dataset(maxframes=1)
+    def get_dataset(self): return get_dataset(max_frames=1)
 
     def get_writer(self): return ProgressWriter()
 
@@ -121,7 +121,7 @@ class Render():
     def get_dataset(self):
         import data.utils
         import eval.cameras.rotate as cameralib
-        dataset = get_dataset(camerafilter=lambda x: x == self.cam, maxframes=self.maxframes)
+        dataset = get_dataset(camera_filter=lambda x: x == self.cam, max_frames=self.maxframes)
         if self.cam is None:
             camdataset = cameralib.Dataset(len(dataset))
             return data.utils.JoinDataset(camdataset, dataset)
