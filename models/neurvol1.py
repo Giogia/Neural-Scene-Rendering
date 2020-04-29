@@ -26,8 +26,8 @@ class Autoencoder(nn.Module):
         self.dt = dt
         self.stepjitter = stepjitter
 
-        self.imagemean = dataset.imagemean
-        self.imagestd = dataset.imagestd
+        self.imagemean = dataset.image_mean
+        self.imagestd = dataset.image_std
 
         if dataset.known_background():
             dataset.get_background(self.bg)
