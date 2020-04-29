@@ -5,11 +5,11 @@
 # LICENSE file in the root directory of this source tree.
 #
 import os
-import data.dryice1 as datamodel
+import data.dryice1 as data_model
 
 
 def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None):
-    return datamodel.Dataset(
+    return data_model.Dataset(
         camerafilter=camera_filter,
         framelist=[i for i in range(15469, 16578, 3)][:max_frames],
         keyfilter=["bg", "fixedcamimage", "camera", "image", "pixelcoords"],
@@ -24,17 +24,17 @@ def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None
 
 
 def get_autoencoder(dataset):
-    import models.neurvol1 as aemodel
-    import models.encoders.mvconv1 as encoderlib
-    import models.decoders.voxel1 as decoderlib
-    import models.volsamplers.warpvoxel as volsamplerlib
-    import models.colorcals.colorcal1 as colorcalib
-    return aemodel.Autoencoder(
+    import models.neurvol1 as ae_model
+    import models.encoders.mvconv1 as encoder_lib
+    import models.decoders.voxel1 as decoder_lib
+    import models.volsamplers.warpvoxel as vol_sampler_lib
+    import models.colorcals.colorcal1 as color_cal_lib
+    return ae_model.Autoencoder(
         dataset,
-        encoderlib.Encoder(3),
-        decoderlib.Decoder(globalwarp=False),
-        volsamplerlib.VolSampler(),
-        colorcalib.Colorcal(dataset.get_allcameras()),
+        encoder_lib.Encoder(3),
+        decoder_lib.Decoder(globalwarp=False),
+        vol_sampler_lib.VolSampler(),
+        color_cal_lib.Colorcal(dataset.get_allcameras()),
         4. / 256)
 
 
@@ -46,9 +46,9 @@ def get_loss():
 # profiles
 # A profile is instantiated by the training or evaluation scripts
 # and controls how the dataset and autoencoder is created
-class Train():
-    batchsize = 8
-    maxiter = 500000
+class Train:
+    batch_size = 8
+    max_iter = 10000
 
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
 
@@ -70,8 +70,8 @@ class Train():
     def get_loss(self): return get_loss()
 
 
-class ProgressWriter():
-    def batch(self, iternum, itemnum, **kwargs):
+class ProgressWriter:
+    def batch(self, iter_num, itemnum, **kwargs):
         import numpy as np
         from PIL import Image
         rows = []
@@ -84,15 +84,15 @@ class ProgressWriter():
             if len(row) == 4:
                 rows.append(np.concatenate(row, axis=1))
                 row = []
-        imgout = np.concatenate(rows, axis=0)
+        img_out = np.concatenate(rows, axis=0)
         outpath = os.path.dirname(__file__)
-        Image.fromarray(np.clip(imgout, 0, 255).astype(np.uint8)).save(
-            os.path.join(outpath, "prog_{:06}.jpg".format(iternum)))
+        Image.fromarray(np.clip(img_out, 0, 255).astype(np.uint8)).save(
+            os.path.join(outpath, "prog_{:06}.jpg".format(iter_num)))
 
 
-class Progress():
+class Progress:
     """Write out diagnostic images during training."""
-    batchsize = 8
+    batch_size = 8
 
     def get_ae_args(self): return dict(outputlist=["irgbrec"])
 
@@ -101,38 +101,38 @@ class Progress():
     def get_writer(self): return ProgressWriter()
 
 
-class Render():
+class Render:
     """Render model with training camera or from novel viewpoints.
     
     e.g., python render.py {configpath} Render --maxframes 128"""
 
-    def __init__(self, cam=None, maxframes=-1, showtarget=False, viewtemplate=False):
+    def __init__(self, cam=None, max_frames=-1, show_target=False, view_template=False):
         self.cam = cam
-        self.maxframes = maxframes
-        self.showtarget = showtarget
-        self.viewtemplate = viewtemplate
+        self.max_frames = max_frames
+        self.show_target = show_target
+        self.view_template = view_template
 
     def get_autoencoder(self, dataset):
         return get_autoencoder(dataset)
 
     def get_ae_args(self):
-        return dict(outputlist=["irgbrec"], viewtemplate=self.viewtemplate)
+        return dict(outputlist=["irgbrec"], viewtemplate=self.view_template)
 
     def get_dataset(self):
         import data.utils
         import eval.cameras.rotate as cameralib
-        dataset = get_dataset(camera_filter=lambda x: x == self.cam, max_frames=self.maxframes)
+        dataset = get_dataset(camera_filter=lambda x: x == self.cam, max_frames=self.max_frames)
         if self.cam is None:
-            camdataset = cameralib.Dataset(len(dataset))
-            return data.utils.JoinDataset(camdataset, dataset)
+            cam_dataset = cameralib.Dataset(len(dataset))
+            return data.utils.JoinDataset(cam_dataset, dataset)
         else:
             return dataset
 
     def get_writer(self):
-        import eval.writers.videowriter as writerlib
-        return writerlib.Writer(
+        import eval.writers.videowriter as writer_lib
+        return writer_lib.Writer(
             os.path.join(os.path.dirname(__file__),
                          "render_{}{}.mp4".format(
                              "rotate" if self.cam is None else self.cam,
-                             "_template" if self.viewtemplate else "")),
-            showtarget=self.showtarget)
+                             "_template" if self.view_template else "")),
+            showtarget=self.show_target)

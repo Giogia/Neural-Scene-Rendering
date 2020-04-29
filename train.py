@@ -91,12 +91,12 @@ if __name__ == "__main__":
     # build dataset & testing dataset
     start_time = time.time()
     test_dataset = progress_prof.get_dataset()
-    dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=progress_prof.batchsize, shuffle=False,
+    dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=progress_prof.batch_size, shuffle=False,
                                              drop_last=True, num_workers=0)
     for test_batch in dataloader:
         break
     dataset = profile.get_dataset()
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=profile.batchsize, shuffle=True, drop_last=True,
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=profile.batch_size, shuffle=True, drop_last=True,
                                              num_workers=16)
     print("Dataset instantiated ({:.2f} s)".format(time.time() - start_time))
 
@@ -148,12 +148,12 @@ if __name__ == "__main__":
         checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
         scheduler = checkpoint['scheduler']
     else:
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer, max_lr=max_lr, total_steps=profile.maxiter)
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer, max_lr=max_lr, total_steps=profile.max_iter)
     print("Scheduler instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # train
     start_time = time.time()
-    eval_points = np.geomspace(1., profile.maxiter, 100).astype(np.int32)
+    eval_points = np.geomspace(1., profile.max_iter, 100).astype(np.int32)
     iter_num = log.iteration_number
     prevloss = np.inf
 
@@ -189,7 +189,7 @@ if __name__ == "__main__":
                                      **progress_prof.get_ae_args())
 
                 b = data["campos"].size(0)
-                writer.batch(iter_num, iter_num * profile.batchsize + torch.arange(b), **test_batch, **test_output)
+                writer.batch(iter_num, iter_num * profile.batch_size + torch.arange(b), **test_batch, **test_output)
 
             # update parameters
             ae_optimizer.zero_grad()
@@ -220,7 +220,7 @@ if __name__ == "__main__":
 
             iter_num += 1
 
-        if iter_num >= profile.maxiter:
+        if iter_num >= profile.max_iter:
             break
 
     # cleanup
