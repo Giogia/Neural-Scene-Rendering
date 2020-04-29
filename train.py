@@ -133,13 +133,13 @@ if __name__ == "__main__":
         ae, ae_optimizer = amp.initialize(ae, ae_optimizer, opt_level='O1')
 
     # super convergence
-    max_lr = 4e-4
+    max_lr = 4e-3
     if args.lrtest:
         lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
         lr_finder.range_test(dataloader, end_lr=10*max_lr, num_iter=100)
         lr_finder.plot()
         lr_finder.reset()
-        max_lr = 0.8 * lr_finder.max_lr() if 0.8 * lr_finder.max_lr() > max_lr else max_lr
+        max_lr = 0.1 * (0.8 * lr_finder.max_lr() if 0.8 * lr_finder.max_lr() > max_lr else max_lr)
         print("Max learning rate set to {:.5f}".format(max_lr))
 
     # build scheduler
