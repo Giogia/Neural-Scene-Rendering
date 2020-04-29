@@ -33,7 +33,7 @@ class Logger(object):
             sys.exit(0)
 
         if resume:
-            self.iteration_number = torch.load("{}/checkpoint.pt".format(outpath))['epoch']
+            self.iteration_number = torch.load("{}/checkpoint.pt".format(outpath))['iteration']
         else:
             self.iteration_number = 0
 
@@ -148,8 +148,7 @@ if __name__ == "__main__":
         checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
         scheduler = checkpoint['scheduler']
     else:
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer,
-                                                        max_lr=max_lr, epochs=10000, steps_per_epoch=len(dataloader))
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer, max_lr=max_lr, total_steps=profile.maxiter)
     print("Scheduler instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # train
@@ -158,7 +157,7 @@ if __name__ == "__main__":
     iter_num = log.iteration_number
     prevloss = np.inf
 
-    for epoch in range(10000):
+    for epoch in range(1000):
         for data in dataloader:
 
             # forward
@@ -213,7 +212,7 @@ if __name__ == "__main__":
             # save intermediate results
             if iter_num % 10 == 0:
                 checkpoint = {
-                    'epoch': epoch,
+                    'iteration': iter_num,
                     'model': ae.module.state_dict(),
                     'optimizer': ae_optimizer.state_dict(),
                     'scheduler': scheduler}
