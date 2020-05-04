@@ -31,7 +31,6 @@ def load_cameras(camera_list, path):
     return cameras
 
 
-
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, camera_filter, camera_list, frame_list, key_filter,
                  fixed_cameras=[], fixed_cam_mean=0., fixed_cam_std=1.,
