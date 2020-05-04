@@ -119,8 +119,8 @@ class Dataset(torch.utils.data.Dataset):
 
             fixed_cam_image = np.zeros((3 * n_input, 512, 334), dtype=np.float32)
             for i in range(n_input):
-                image_path = ("experiments/brain1/data/camera_{}/{}.exr".format(self.fixed_cameras[i], int(frame)))
-                image = np.asarray(exr_to_image(image_path), dtype=np.uint8)[::2, ::2, :].transpose((2, 0, 1)).astype(
+                image_path = os.path.join('experiments', 'brain1', 'data', 'camera_' + str(self.fixed_cameras[i]), str(frame) + '.exr')
+                image = exr_to_image(image_path)[::2, ::2, :].transpose((2, 0, 1)).astype(
                     np.float32)
                 if np.sum(image) == 0:
                     valid_input = False
@@ -144,7 +144,7 @@ class Dataset(torch.utils.data.Dataset):
             if "image" in self.key_filter:
                 # image
                 image_path = ("experiments/brain1/data/camera_{}/{}.exr".format(cam, int(frame)))
-                image = np.asarray(exr_to_image(image_path), dtype=np.uint8).transpose((2, 0, 1)).astype(np.float32)
+                image = exr_to_image(image_path).transpose((2, 0, 1)).astype(np.float32)
                 height, width = image.shape[1:3]
                 valid = np.float32(1.0) if np.sum(image) != 0 else np.float32(0.)
                 result["image"] = image
