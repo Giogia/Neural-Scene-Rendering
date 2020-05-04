@@ -11,6 +11,7 @@ import data.brain1 as data_model
 def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None):
     return data_model.Dataset(
         camera_filter=camera_filter,
+        camera_list=[i+1 for i in range(8)],
         frame_list=[1 for i in range(40)][:max_frames],
         key_filter=["background", "fixedcamimage", "camera", "image", "pixelcoords"],
         fixed_cameras=["1", "3", "7"],

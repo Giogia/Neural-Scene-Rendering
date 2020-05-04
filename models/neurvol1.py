@@ -19,7 +19,7 @@ class Autoencoder(nn.Module):
         self.encoder = encoder
         self.decoder = decoder
         self.volsampler = volsampler
-        self.bg = nn.ParameterDict({
+        self.background = nn.ParameterDict({
             k: nn.Parameter(torch.ones(3, v["size"][1], v["size"][0]), requires_grad=estimatebg)
             for k, v in dataset.get_krt().items()})
         self.colorcal = colorcal
@@ -30,14 +30,14 @@ class Autoencoder(nn.Module):
         self.imagestd = dataset.image_std
 
         if dataset.known_background():
-            dataset.get_background(self.bg)
+            dataset.get_background(self.background)
 
     # omit background from state_dict if it's not being estimated
     def state_dict(self, destination=None, prefix='', keep_vars=False):
         ret = super(Autoencoder, self).state_dict(destination, prefix, keep_vars)
         if not self.estimatebg:
-            for k in self.bg.keys():
-                del ret[prefix + "bg." + k]
+            for k in self.background.keys():
+                del ret[prefix + "background." + k]
         return ret
 
     def forward(self, losslist, camrot, campos, focal, princpt, pixelcoords, validinput,
@@ -110,18 +110,18 @@ class Autoencoder(nn.Module):
             imagesize = torch.tensor(image.size()[3:1:-1], dtype=torch.float32, device=pixelcoords.device)
             samplecoords = pixelcoords * 2. / (imagesize[None, None, None, :] - 1.) - 1.
 
-        # color correction / bg
+        # color correction / background
         if camindex is not None:
             rayrgb = self.colorcal(rayrgb, camindex)
 
             if pixelcoords.size()[1:3] != image.size()[2:4]:
-                bg = F.grid_sample(
-                    torch.stack([self.bg[self.allcameras[camindex[i].item()]] for i in range(campos.size(0))], dim=0),
+                background = F.grid_sample(
+                    torch.stack([self.background[self.allcameras[camindex[i].item()]] for i in range(campos.size(0))], dim=0),
                     samplecoords)
             else:
-                bg = torch.stack([self.bg[self.allcameras[camindex[i].item()]] for i in range(campos.size(0))], dim=0)
+                background = torch.stack([self.background[self.allcameras[camindex[i].item()]] for i in range(campos.size(0))], dim=0)
 
-            rayrgb = rayrgb + (1. - rayalpha) * bg.clamp(min=0.)
+            rayrgb = rayrgb + (1. - rayalpha) * background.clamp(min=0.)
 
         if "irgbrec" in outputlist:
             result["irgbrec"] = rayrgb
@@ -138,7 +138,7 @@ class Autoencoder(nn.Module):
         # irgb loss
         if image is not None:
             if pixelcoords.size()[1:3] != image.size()[2:4]:
-                image = F.grid_sample(image, samplecoords)
+                image = F.grid_sample(image, samplecoords, align_corners=True)
 
             # standardize
             rayrgb = (rayrgb - self.imagemean) / self.imagestd

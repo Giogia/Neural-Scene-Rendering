@@ -14,14 +14,13 @@ from .exr_utils import exr_to_image
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def load_cameras(path):
+def load_cameras(camera_list, path):
 
     cameras = {}
     intrinsic = read_csv(os.path.join(path, 'camera_intrinsic.csv'))
 
-    for i in range(10):
-        name = str(i + 1)
-        # TODO dist = [float(x) for x in f.readline().split()]
+    for camera_name in camera_list:
+        name = str(camera_name)
         extrinsic = read_csv(os.path.join(path, 'camera_' + name, 'pose.csv'))
         cameras[name] = {
             "intrinsic": np.array(intrinsic),
@@ -34,17 +33,16 @@ def load_cameras(path):
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, camera_filter, frame_list, key_filter,
+    def __init__(self, camera_filter, camera_list, frame_list, key_filter,
                  fixed_cameras=[], fixed_cam_mean=0., fixed_cam_std=1.,
                  image_mean=0., image_std=1.,
                  world_scale=1., subsample_type=None, subsample_size=0):
 
-        path = "experiments/brain1/data/"
-        cameras = load_cameras(path)
+        path = os.path.join('experiments', 'brain1', 'data')
+        cameras = load_cameras(camera_list, path)
 
         # get options
-        self.all_cameras = sorted(list(cameras.keys()))
-        self.cameras = list(filter(camera_filter, self.all_cameras))
+        self.cameras = sorted(list(filter(camera_filter, cameras.keys())))
         self.frame_list = frame_list
         self.frame_cam_list = [(x, cam)
                                for x in self.frame_list
@@ -76,16 +74,16 @@ class Dataset(torch.utils.data.Dataset):
         # load background images for each camera
         if "background" in self.key_filter:
             self.background = {}
-            for i, cam in enumerate(self.cameras):
+            for camera_name in self.cameras:
                 try:
-                    image_path = os.join.path(path, "camera_{}/background.exr".format(i+1))
+                    image_path = os.path.join(path, 'camera_' + camera_name, 'background.exr')
                     image = np.asarray(exr_to_image(image_path), dtype=np.uint8).transpose((2, 0, 1)).astype(np.float32)
-                    self.background[cam] = image
-                except:
+                    self.background[camera_name] = image
+                except KeyboardInterrupt:
                     pass
 
     def get_allcameras(self):
-        return self.all_cameras
+        return self.cameras
 
     def get_krt(self):
         return {k: {
@@ -93,17 +91,17 @@ class Dataset(torch.utils.data.Dataset):
             "rot": self.cam_rot[k],
             "focal": self.focal[k],
             "princpt": self.princ_pt[k],
-            "size": np.array([334, 512])}
+            "size": np.array([667, 1024])}
             for k in self.cameras}
 
     def known_background(self):
         return "background" in self.key_filter
 
-    def get_background(self, bg):
+    def get_background(self, background):
         if "background" in self.key_filter:
-            for i, cam in enumerate(self.cameras):
-                if cam in self.background:
-                    bg[cam].data[:] = torch.from_numpy(self.background[cam]).to(device)
+            for camera_name in self.cameras:
+                if camera_name in self.background.keys():
+                    background[camera_name].data[:] = torch.from_numpy(self.background[camera_name]).to(device)
 
     def __len__(self):
         return len(self.frame_cam_list)
@@ -141,7 +139,7 @@ class Dataset(torch.utils.data.Dataset):
                 result["campos"] = np.dot(self.model_transformation[:3, :3].T, self.campos[cam] - self.model_transformation[:3, 3])
                 result["focal"] = self.focal[cam]
                 result["princpt"] = self.princ_pt[cam]
-                result["camindex"] = self.all_cameras.index(cam)
+                result["camindex"] = self.cameras.index(cam)
 
             if "image" in self.key_filter:
                 # image
