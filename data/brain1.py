@@ -77,7 +77,7 @@ class Dataset(torch.utils.data.Dataset):
             for camera_name in self.cameras:
                 try:
                     image_path = os.path.join(path, 'camera_' + camera_name, 'background.exr')
-                    image = np.asarray(exr_to_image(image_path), dtype=np.uint8).transpose((2, 0, 1)).astype(np.float32)
+                    image = exr_to_image(image_path).transpose((2, 0, 1)).astype(np.float32)
                     self.background[camera_name] = image
                 except KeyboardInterrupt:
                     pass
