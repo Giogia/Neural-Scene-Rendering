@@ -33,8 +33,7 @@ def load_cameras(camera_list, path):
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, camera_filter, camera_list, frame_list, key_filter,
-                 fixed_cameras=[], fixed_cam_mean=0., fixed_cam_std=1.,
-                 image_mean=0., image_std=1.,
+                 fixed_cameras=[], image_mean=0., image_std=1.,
                  world_scale=1., subsample_type=None, subsample_size=0):
 
         path = os.path.join('experiments', 'brain1', 'data')
@@ -49,8 +48,6 @@ class Dataset(torch.utils.data.Dataset):
 
         self.key_filter = key_filter
         self.fixed_cameras = fixed_cameras
-        self.fixed_cam_mean = fixed_cam_mean
-        self.fixed_cam_std = fixed_cam_std
         self.image_mean = image_mean
         self.image_std = image_std
         self.subsample_type = subsample_type
