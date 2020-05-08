@@ -92,7 +92,9 @@ if __name__ == "__main__":
     start_time = time.time()
     test_dataset = progress_prof.get_dataset()
     dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=progress_prof.batch_size, shuffle=False)
-    test_batch = next(iter(dataloader))
+    # get last element of iterator
+    for test_batch in dataloader:
+        pass
 
     dataset = profile.get_dataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=profile.batch_size, shuffle=True, drop_last=True,
