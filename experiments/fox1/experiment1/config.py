@@ -15,7 +15,7 @@ def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None
         frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)][:max_frames],
         key_filter=["background", "fixedcamimage", "camera", "image", "pixelcoords"],
         fixed_cameras=["1", "3", "7"],
-        image_mean=100.,
+        image_mean=50.,
         image_std=25.,
         subsample_type=subsample_type,
         subsample_size=128,
