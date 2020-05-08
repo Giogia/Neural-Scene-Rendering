@@ -6,20 +6,20 @@
 #
 import os
 import data.blender as data_model
-
+import data.parameters as parameters
 
 def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None):
     return data_model.Dataset(
         camera_filter=camera_filter,
-        camera_list=[i+1 for i in range(8)],
-        frame_list=[i for i in range(150, 200)][:max_frames],
+        camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
+        frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)][:max_frames],
         key_filter=["background", "fixedcamimage", "camera", "image", "pixelcoords"],
         fixed_cameras=["1", "3", "7"],
         image_mean=50.,
         image_std=25.,
         subsample_type=subsample_type,
         subsample_size=128,
-        world_scale=1. / 10,
+        world_scale= parameters.SCALE,
         path=os.path.join('experiments', 'fox1', 'data'))
 
 
