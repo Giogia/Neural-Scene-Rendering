@@ -20,7 +20,7 @@ def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None
         subsample_type=subsample_type,
         subsample_size=128,
         world_scale=parameters.SCALE,
-        path=os.path.join('experiments', 'fox1', 'data'))
+        path=os.path.join('experiments', 'Fox', 'data'))
 
 
 def get_autoencoder(dataset):
