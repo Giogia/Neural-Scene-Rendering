@@ -68,7 +68,7 @@ tmtagsHistory
 venv
 
 # additional files
-*.csv
+.csv
 
 # Pytorch
 *.pt
