@@ -38,6 +38,8 @@ class Dataset(torch.utils.data.Dataset):
 
         self.path = path
         cameras = load_cameras(camera_list, self.path)
+        # todo debug path
+        self.path = os.path.join('experiments', 'Fox', 'data')
 
         # get options
         self.cameras = sorted(list(filter(camera_filter, cameras.keys())))
