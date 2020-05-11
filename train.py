@@ -60,6 +60,7 @@ if __name__ == "__main__":
     parser.add_argument('--resume', action='store_true', help='resume training')
     parser.add_argument('--lrtest', action='store_true', help='perform learning rate test')
     parser.add_argument('--mpt', action='store_true', help='enable mixed precision training')
+    parser.add_argument('--super', action='store_true', help='enable super convergence')
 
     parsed, unknown = parser.parse_known_args()
     for arg in unknown:
@@ -125,7 +126,7 @@ if __name__ == "__main__":
         ae, ae_optimizer = amp.initialize(ae, ae_optimizer, opt_level='O1')
 
     # super convergence
-    max_lr = 4e-4
+    max_lr = 4e-3
     if args.lrtest:
         lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
         lr_finder.range_test(dataloader, end_lr=10*max_lr, num_iter=100)
@@ -187,7 +188,8 @@ if __name__ == "__main__":
             ae_optimizer.zero_grad()
             loss.backward()
             ae_optimizer.step()
-            scheduler.step()
+            if args.super:
+                scheduler.step()
 
             # check for loss explosion
             if loss.item() > 20 * prevloss or not np.isfinite(loss.item()):
