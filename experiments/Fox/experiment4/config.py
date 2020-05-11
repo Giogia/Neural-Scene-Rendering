@@ -71,7 +71,7 @@ class Train:
 
 
 class ProgressWriter:
-    def batch(self, iter_num, itemnum, **kwargs):
+    def batch(self, iter_num, **kwargs):
         import numpy as np
         from PIL import Image
         rows = []
