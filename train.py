@@ -187,7 +187,7 @@ if __name__ == "__main__":
             ae_optimizer.zero_grad()
             loss.backward()
             ae_optimizer.step()
-            scheduler.step()
+            # scheduler.step()
 
             # check for loss explosion
             if loss.item() > 20 * prevloss or not np.isfinite(loss.item()):
