@@ -181,7 +181,7 @@ if __name__ == "__main__":
                                      **progress_prof.get_ae_args())
 
                 b = data["campos"].size(0)
-                writer.batch(iter_num, iter_num * profile.batch_size + torch.arange(b), **test_batch, **test_output)
+                writer.batch(iter_num, **test_batch, **test_output)
 
             # update parameters
             ae_optimizer.zero_grad()
