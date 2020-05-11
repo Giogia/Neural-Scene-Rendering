@@ -46,7 +46,7 @@ class Writer():
         self.writepool = multiprocessing.Pool(nthreads)
         self.nitems = 0
 
-    def batch(self, iternum, itemnum, irgbrec, ialpharec=None, image=None, irgbsqerr=None, **kwargs):
+    def batch(self, itemnum, irgbrec, ialpharec=None, image=None, irgbsqerr=None, **kwargs):
         irgbrec = irgbrec.data.to("cpu").numpy().transpose((0, 2, 3, 1))
         if ialpharec is not None:
             ialpharec = ialpharec.data.to("cpu").numpy()[:, 0, :, :, None]

@@ -10,17 +10,17 @@ import data.dryice1 as datamodel
 
 def get_dataset(camerafilter=lambda x: True, maxframes=-1, subsampletype=None):
     return datamodel.Dataset(
-        camerafilter=camerafilter,
-        framelist=[i for i in range(15469, 16578, 3)][:maxframes],
-        keyfilter=["bg", "fixedcamimage", "camera", "image", "pixelcoords"],
-        fixedcameras=["400007", "400010", "400018"],
-        fixedcammean=100.,
-        fixedcamstd=25.,
-        imagemean=100.,
-        imagestd=25.,
-        subsampletype=subsampletype,
-        subsamplesize=128,
-        worldscale=1. / 256)
+        camera_filter=camerafilter,
+        frame_list=[i for i in range(15469, 16578, 3)][:maxframes],
+        key_filter=["bg", "fixedcamimage", "camera", "image", "pixelcoords"],
+        fixed_cameras=["400007", "400010", "400018"],
+        fixed_cam_mean=100.,
+        fixed_cam_std=25.,
+        image_mean=100.,
+        image_std=25.,
+        subsample_type=subsampletype,
+        subsample_size=128,
+        world_scale=1. / 256)
 
 
 def get_autoencoder(dataset):

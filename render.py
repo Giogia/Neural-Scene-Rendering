@@ -1,10 +1,3 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
-"""Render object from training camera viewpoint or novel viewpoints."""
 import argparse
 import importlib
 import importlib.util
@@ -19,7 +12,6 @@ sys.dont_write_bytecode = True
 torch.backends.cudnn.benchmark = True  # gotta go fast!
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 
 def import_module(file_path, module_name):
     spec = importlib.util.spec_from_file_location(module_name, file_path)
@@ -50,7 +42,7 @@ if __name__ == "__main__":
     experconfig = import_module(args.experconfig, "config")
     profile = getattr(experconfig, args.profile)(**{k: v for k, v in vars(args).items() if k not in parsed})
 
-    # load datasets
+    # load dataset
     dataset = profile.get_dataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batchsize, shuffle=False, num_workers=16)
 
@@ -63,32 +55,30 @@ if __name__ == "__main__":
 
     # load
     state_dict = ae.module.state_dict()
-    trained_state_dict = torch.load("{}/aeparams.pt".format(outpath))
+    trained_state_dict = torch.load("{}/aeparams.pt".format(outpath), map_location=torch.device(device))
     trained_state_dict = {k: v for k, v in trained_state_dict.items() if k in state_dict}
     state_dict.update(trained_state_dict)
     ae.module.load_state_dict(state_dict, strict=False)
 
     # eval
-    iternum = 0
-    itemnum = 0
-    starttime = time.time()
+    item_num = 0
+    start_time = time.time()
 
     with torch.no_grad():
         for data in dataloader:
             b = next(iter(data.values())).size(0)
 
             # forward
-            output = ae(iternum, [], **{k: x.to(device) for k, x in data.items()}, **profile.get_ae_args())
+            output = ae([], **{k: x.to(device) for k, x in data.items()}, **profile.get_ae_args())
 
-            writer.batch(iternum, itemnum + torch.arange(b), **data, **output)
+            writer.batch(item_num + torch.arange(b), **data, **output)
 
-            endtime = time.time()
-            ips = 1. / (endtime - starttime)
-            print("{:4} / {:4} ({:.4f} iter/sec)".format(itemnum, len(dataset), ips), end="\n")
-            starttime = time.time()
+            end_time = time.time()
+            ips = 1. / (end_time - start_time)
+            print("{:4} / {:4} ({:.4f} iter/sec)".format(item_num, len(dataset), ips), end="\n")
+            start_time = time.time()
 
-            iternum += 1
-            itemnum += b
+            item_num += b
 
     # cleanup
     writer.finalize()
