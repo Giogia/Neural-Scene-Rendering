@@ -39,26 +39,36 @@ if __name__ == "__main__":
     print("Output path:", outpath)
 
     # load config
+    start_time = time.time()
     experconfig = import_module(args.experconfig, "config")
     profile = getattr(experconfig, args.profile)(**{k: v for k, v in vars(args).items() if k not in parsed})
+    print("Config loaded ({:.2f} s)".format(time.time() - start_time))
 
     # load dataset
+    start_time = time.time()
     dataset = profile.get_dataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batchsize, shuffle=False, num_workers=16)
+    print("Dataset instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # data writer
+    start_time = time.time()
     writer = profile.get_writer()
+    print("Writer instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build autoencoder
+    start_time = time.time()
     ae = profile.get_autoencoder(dataset)
     ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).eval()
+    print("Autoencoder instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # load
+    start_time = time.time()
+    checkpoint = torch.load("{}/checkpoint.pt".format(outpath), map_location=torch.device(device))
     state_dict = ae.module.state_dict()
-    trained_state_dict = torch.load("{}/aeparams.pt".format(outpath), map_location=torch.device(device))
-    trained_state_dict = {k: v for k, v in trained_state_dict.items() if k in state_dict}
+    trained_state_dict = {k: v for k, v in checkpoint['model'].items() if k in state_dict}
     state_dict.update(trained_state_dict)
     ae.module.load_state_dict(state_dict, strict=False)
+    print("Training weights loaded ({:.2f} s)".format(time.time() - start_time))
 
     # eval
     item_num = 0
