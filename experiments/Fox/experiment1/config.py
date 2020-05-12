@@ -20,12 +20,12 @@ def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None
         subsample_type=subsample_type,
         subsample_size=128,
         world_scale=parameters.SCALE,
-        path=os.path.join('experiments', 'Fox', 'data'))
+        path=os.path.join('experiments', 'Fox', 'data2'))
 
 
 def get_autoencoder(dataset):
     import models.autoencoder as ae_model
-    import models.encoders.mv_conv as encoder_lib
+    import models.encoders.mv_conv_hd as encoder_lib
     import models.decoders.voxel as decoder_lib
     import models.volsamplers.warpvoxel as vol_sampler_lib
     import models.colorcals.color_calibrator as color_cal_lib

@@ -87,7 +87,7 @@ class Dataset(torch.utils.data.Dataset):
             "rot": self.cam_rot[k],
             "focal": self.focal[k],
             "princpt": self.princ_pt[k],
-            "size": np.array([667, 1024])}
+            "size": np.array([960, 540])}
             for k in self.cameras}
 
     def known_background(self):
@@ -113,7 +113,7 @@ class Dataset(torch.utils.data.Dataset):
         if "fixed_cam_image" in self.key_filter:
             n_input = len(self.fixed_cameras)
 
-            fixed_cam_image = np.zeros((3 * n_input, 512, 334), dtype=np.float32)
+            fixed_cam_image = np.zeros((3 * n_input, 270, 480), dtype=np.float32)
             for i in range(n_input):
                 image_path = os.path.join(self.path, 'camera_' + str(self.fixed_cameras[i]), str(frame) + '.exr')
                 image = 255 * exr_to_image(image_path)[::2, ::2, :].transpose((2, 0, 1)).astype(
