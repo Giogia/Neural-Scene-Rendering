@@ -61,7 +61,7 @@ class Train:
         aeparams = itertools.chain(
             [{"params": x} for x in ae.encoder.parameters()],
             [{"params": x} for x in ae.decoder.parameters()],
-            [{"params": x} for x in ae.color_calibration.parameters()])
+            [{"params": x} for x in ae.color_calibrator.parameters()])
         return torch.optim.AdamW(aeparams, lr=lr, betas=(0.9, 0.999))
 
     def get_loss_weights(self):
