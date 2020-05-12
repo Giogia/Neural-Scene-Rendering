@@ -13,7 +13,7 @@ def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None
         camera_filter=camera_filter,
         camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
         frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)][:max_frames],
-        key_filter=["background", "fixedcamimage", "camera", "image", "pixelcoords"],
+        key_filter=["background", "fixed_cam_image", "camera", "image", "pixel_coords"],
         fixed_cameras=["1", "3", "7"],
         image_mean=50.,
         image_std=25.,
@@ -24,17 +24,17 @@ def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None
 
 
 def get_autoencoder(dataset):
-    import models.neurvol1 as ae_model
-    import models.encoders.mvconv1 as encoder_lib
-    import models.decoders.voxel1 as decoder_lib
+    import models.autoencoder as ae_model
+    import models.encoders.mv_conv as encoder_lib
+    import models.decoders.voxel as decoder_lib
     import models.volsamplers.warpvoxel as vol_sampler_lib
-    import models.colorcals.colorcal1 as color_cal_lib
+    import models.colorcals.color_calibrator as color_cal_lib
     return ae_model.Autoencoder(
         dataset,
         encoder_lib.Encoder(3),
         decoder_lib.Decoder(globalwarp=False),
         vol_sampler_lib.VolSampler(),
-        color_cal_lib.Colorcal(dataset.get_allcameras()),
+        color_cal_lib.Colorcal(dataset.get_cameras()),
         4. / 256)
 
 
@@ -61,7 +61,7 @@ class Train:
         aeparams = itertools.chain(
             [{"params": x} for x in ae.encoder.parameters()],
             [{"params": x} for x in ae.decoder.parameters()],
-            [{"params": x} for x in ae.colorcal.parameters()])
+            [{"params": x} for x in ae.color_calibration.parameters()])
         return torch.optim.AdamW(aeparams, lr=lr, betas=(0.9, 0.999))
 
     def get_loss_weights(self):

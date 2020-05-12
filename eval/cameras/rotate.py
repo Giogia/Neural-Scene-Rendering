@@ -17,18 +17,18 @@ class Dataset(torch.utils.data.Dataset):
         self.width, self.height = 480, 640
 
         self.focal = np.array([1000. * (self.width / 480.), 1000. * (self.width / 480.)], dtype=np.float32)
-        self.princpt = np.array([self.width * 0.5, self.height * 0.5], dtype=np.float32)
+        self.principal_point = np.array([self.width * 0.5, self.height * 0.5], dtype=np.float32)
 
     def __len__(self):
         return self.length
 
-    def get_allcameras(self):
+    def get_cameras(self):
         return ["rotate"]
 
     def get_krt(self):
         return {"rotate": {
             "focal": self.focal,
-            "princpt": self.princpt,
+            "principal_point": self.principal_point,
             "size": np.array([self.width, self.height])}}
 
     def __getitem__(self, idx):
@@ -38,22 +38,22 @@ class Dataset(torch.utils.data.Dataset):
         z = np.sin(t * 0.5 * np.pi + 0.25 * np.pi) * 3.
         campos = np.array([x, y, z], dtype=np.float32)
 
-        lookat = np.array([0., 0., 0.], dtype=np.float32)
+        look_at = np.array([0., 0., 0.], dtype=np.float32)
         up = np.array([0., -1., 0.], dtype=np.float32)
-        forward = lookat - campos
+        forward = look_at - campos
         forward /= np.linalg.norm(forward)
         right = np.cross(up, forward)
         right /= np.linalg.norm(right)
         up = np.cross(forward, right)
         up /= np.linalg.norm(up)
 
-        camrot = np.array([right, up, forward], dtype=np.float32)
+        camera_rotation = np.array([right, up, forward], dtype=np.float32)
 
         px, py = np.meshgrid(np.arange(self.width).astype(np.float32), np.arange(self.height).astype(np.float32))
-        pixelcoords = np.stack((px, py), axis=-1)
+        pixel_coords = np.stack((px, py), axis=-1)
 
         return {"campos": campos,
-                "camrot": camrot,
+                "camera_rotation": camera_rotation,
                 "focal": self.focal,
-                "princpt": self.princpt,
-                "pixelcoords": pixelcoords}
+                "principal_point": self.principal_point,
+                "pixel_coords": pixel_coords}

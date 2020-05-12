@@ -78,7 +78,7 @@ class Dataset(torch.utils.data.Dataset):
                 except KeyboardInterrupt:
                     pass
 
-    def get_allcameras(self):
+    def get_cameras(self):
         return self.cameras
 
     def get_krt(self):
@@ -110,7 +110,7 @@ class Dataset(torch.utils.data.Dataset):
         valid_input = True
 
         # fixed camera images
-        if "fixedcamimage" in self.key_filter:
+        if "fixed_cam_image" in self.key_filter:
             n_input = len(self.fixed_cameras)
 
             fixed_cam_image = np.zeros((3 * n_input, 512, 334), dtype=np.float32)
@@ -123,19 +123,19 @@ class Dataset(torch.utils.data.Dataset):
                 fixed_cam_image[i * 3:(i + 1) * 3, :, :] = image
             fixed_cam_image[:] -= self.image_mean
             fixed_cam_image[:] /= self.image_std
-            result["fixedcamimage"] = fixed_cam_image
+            result["fixed_cam_image"] = fixed_cam_image
 
-        result["validinput"] = np.float32(1.0 if valid_input else 0.0)
+        result["valid_input"] = np.float32(1.0 if valid_input else 0.0)
 
         # image data
         if cam is not None:
             if "camera" in self.key_filter:
                 # camera data
-                result["camrot"] = np.dot(self.model_transformation[:3, :3].T, self.cam_rot[cam].T).T
-                result["campos"] = np.dot(self.model_transformation[:3, :3].T, self.campos[cam] - self.model_transformation[:3, 3])
+                result["camera_rotation"] = np.dot(self.model_transformation[:3, :3].T, self.cam_rot[cam].T).T
+                result["camera_position"] = np.dot(self.model_transformation[:3, :3].T, self.campos[cam] - self.model_transformation[:3, 3])
                 result["focal"] = self.focal[cam]
-                result["princpt"] = self.princ_pt[cam]
-                result["camindex"] = self.cameras.index(cam)
+                result["principal_point"] = self.princ_pt[cam]
+                result["camera_index"] = self.cameras.index(cam)
 
             if "image" in self.key_filter:
                 # image
@@ -144,9 +144,9 @@ class Dataset(torch.utils.data.Dataset):
                 height, width = image.shape[1:3]
                 valid = np.float32(1.0) if np.sum(image) != 0 else np.float32(0.)
                 result["image"] = image
-                result["imagevalid"] = valid
+                result["image_valid"] = valid
 
-            if "pixelcoords" in self.key_filter:
+            if "pixel_coords" in self.key_filter:
                 if self.subsample_type == "patch":
                     ind_x = np.random.randint(0, width - self.subsample_size + 1)
                     ind_y = np.random.randint(0, height - self.subsample_size + 1)
@@ -166,6 +166,6 @@ class Dataset(torch.utils.data.Dataset):
                 else:
                     px, py = np.meshgrid(np.arange(width).astype(np.float32), np.arange(height).astype(np.float32))
 
-                result["pixelcoords"] = np.stack((px, py), axis=-1)
+                result["pixel_coords"] = np.stack((px, py), axis=-1)
 
         return result
