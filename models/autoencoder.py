@@ -4,7 +4,8 @@ import torch.nn.functional as F
 
 
 class Autoencoder(nn.Module):
-    def __init__(self, dataset, encoder, decoder, volsampler, colorcal, dt, stepjitter=0.01, estimate_background=False):
+    def __init__(self, dataset, encoder, decoder, volume_sampler, color_calibrator, dt, step_jitter=0.01,
+                 estimate_background=False):
         super(Autoencoder, self).__init__()
 
         self.estimate_background = estimate_background
@@ -12,15 +13,15 @@ class Autoencoder(nn.Module):
 
         self.encoder = encoder
         self.decoder = decoder
-        self.volume_sampler = volsampler
+        self.volume_sampler = volume_sampler
 
         self.background = nn.ParameterDict({
             k: nn.Parameter(torch.ones(3, v["size"][1], v["size"][0]), requires_grad=estimate_background)
             for k, v in dataset.get_krt().items()})
 
-        self.color_calibration = colorcal
+        self.color_calibrator = color_calibrator
         self.dt = dt
-        self.step_jitter = stepjitter
+        self.step_jitter = step_jitter
 
         self.image_mean = dataset.image_mean
         self.image_std = dataset.image_std
@@ -40,6 +41,7 @@ class Autoencoder(nn.Module):
                 fixed_cam_image=None, encoding=None, keypoints=None, camera_index=None,
                 image=None, image_valid=None, view_template=False,
                 output_list=[]):
+
         result = {"losses": {}}
 
         # encode input or get encoding
@@ -108,7 +110,7 @@ class Autoencoder(nn.Module):
 
         # color correction / background
         if camera_index is not None:
-            ray_rgb = self.color_calibration(ray_rgb, camera_index)
+            ray_rgb = self.color_calibrator(ray_rgb, camera_index)
 
             if pixel_coords.size()[1:3] != image.size()[2:4]:
                 background = F.grid_sample(

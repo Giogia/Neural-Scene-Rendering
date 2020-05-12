@@ -63,7 +63,7 @@ class LRFinder(object):
             model,
             optimizer,
             criterion,
-            lossweights,
+            loss_weights,
             device=None,
             memory_cache=True,
             cache_dir=None,
@@ -75,7 +75,7 @@ class LRFinder(object):
 
         self.model = model
         self.criterion = criterion
-        self.lossweights = lossweights
+        self.loss_weights = loss_weights
         self.history = {"lr": [], "loss": []}
         self.best_loss = None
         self.memory_cache = memory_cache
@@ -244,8 +244,8 @@ class LRFinder(object):
             # inputs = self._move_to_device(inputs)
 
             # Forward pass
-            outputs = self.model(self.lossweights.keys(), **{k: x.to(self.device) for k, x in inputs.items()})
-            loss = self.criterion(outputs, self.lossweights)
+            outputs = self.model(self.loss_weights.keys(), **{k: x.to(self.device) for k, x in inputs.items()})
+            loss = self.criterion(outputs, self.loss_weights)
 
             # Loss should be averaged in each step
             loss /= accumulation_steps
@@ -303,8 +303,8 @@ class LRFinder(object):
                     batch_size = inputs.size(0)
 
                 # Forward pass and loss computation
-                outputs = self.model(self.lossweights.keys(), **{k: x.to(self.device) for k, x in inputs.items()})
-                loss = self.criterion(outputs, self.lossweights)
+                outputs = self.model(self.loss_weights.keys(), **{k: x.to(self.device) for k, x in inputs.items()})
+                loss = self.criterion(outputs, self.loss_weights)
                 running_loss += loss.item() * batch_size
 
         return running_loss / len(dataloader.dataset)
