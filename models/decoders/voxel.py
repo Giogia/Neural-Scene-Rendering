@@ -14,25 +14,25 @@ import models.utils
 
 
 class ConvTemplate(nn.Module):
-    def __init__(self, encodingsize=256, outchannels=4, templateres=128):
+    def __init__(self, encoding_size=256, out_channels=4, template_res=128):
         super(ConvTemplate, self).__init__()
 
-        self.encodingsize = encodingsize
-        self.outchannels = outchannels
-        self.templateres = templateres
+        self.encoding_size = encoding_size
+        self.out_channels = out_channels
+        self.template_res = template_res
 
         # build template convolution stack
-        self.template1 = nn.Sequential(nn.Linear(self.encodingsize, 1024), nn.LeakyReLU(0.2))
+        self.template1 = nn.Sequential(nn.Linear(self.encoding_size, 1024), nn.LeakyReLU(0.2))
         template2 = []
-        inchannels, outchannels = 1024, 512
-        for i in range(int(np.log2(self.templateres)) - 1):
-            template2.append(nn.ConvTranspose3d(inchannels, outchannels, 4, 2, 1))
+        in_channels, out_channels = 1024, 512
+        for i in range(int(np.log2(self.template_res)) - 1):
+            template2.append(nn.ConvTranspose3d(in_channels, out_channels, 4, 2, 1))
             template2.append(nn.LeakyReLU(0.2))
-            if inchannels == outchannels:
-                outchannels = inchannels // 2
+            if in_channels == out_channels:
+                out_channels = in_channels // 2
             else:
-                inchannels = outchannels
-        template2.append(nn.ConvTranspose3d(inchannels, 4, 4, 2, 1))
+                in_channels = out_channels
+        template2.append(nn.ConvTranspose3d(in_channels, 4, 4, 2, 1))
         self.template2 = nn.Sequential(*template2)
 
         for m in [self.template1, self.template2]:
@@ -43,38 +43,38 @@ class ConvTemplate(nn.Module):
 
 
 class LinearTemplate(nn.Module):
-    def __init__(self, encodingsize=256, outchannels=4, templateres=128):
+    def __init__(self, encoding_size=256, out_channels=4, template_res=128):
         super(LinearTemplate, self).__init__()
 
-        self.encodingsize = encodingsize
-        self.outchannels = outchannels
-        self.templateres = templateres
+        self.encoding_size = encoding_size
+        self.out_channels = out_channels
+        self.template_res = template_res
 
         self.template1 = nn.Sequential(
-            nn.Linear(self.encodingsize, 8), nn.LeakyReLU(0.2),
-            nn.Linear(8, self.templateres ** 3 * self.outchannels))
+            nn.Linear(self.encoding_size, 8), nn.LeakyReLU(0.2),
+            nn.Linear(8, self.template_res ** 3 * self.out_channels))
 
         for m in [self.template1]:
             models.utils.initseq(m)
 
     def forward(self, encoding):
-        return self.template1(encoding).view(-1, self.outchannels, self.templateres, self.templateres, self.templateres)
+        return self.template1(encoding).view(-1, self.out_channels, self.template_res, self.template_res, self.template_res)
 
 
-def gettemplate(templatetype, **kwargs):
-    if templatetype == "conv":
+def get_template(template_type, **kwargs):
+    if template_type == "conv":
         return ConvTemplate(**kwargs)
-    elif templatetype == "affinemix":
+    elif template_type == "affinemix":
         return LinearTemplate(**kwargs)
     else:
         return None
 
 
 class ConvWarp(nn.Module):
-    def __init__(self, displacementwarp=False, **kwargs):
+    def __init__(self, displacement_warp=False, **kwargs):
         super(ConvWarp, self).__init__()
 
-        self.displacementwarp = displacementwarp
+        self.displacement_warp = displacement_warp
 
         self.warp1 = nn.Sequential(
             nn.Linear(256, 1024), nn.LeakyReLU(0.2))
@@ -87,73 +87,73 @@ class ConvWarp(nn.Module):
         for m in [self.warp1, self.warp2]:
             models.utils.initseq(m)
 
-        zgrid, ygrid, xgrid = np.meshgrid(
+        z_grid, y_grid, x_grid = np.meshgrid(
             np.linspace(-1.0, 1.0, 32),
             np.linspace(-1.0, 1.0, 32),
             np.linspace(-1.0, 1.0, 32), indexing='ij')
-        self.register_buffer("grid", torch.tensor(np.stack((xgrid, ygrid, zgrid), axis=0)[None].astype(np.float32)))
+        self.register_buffer("grid", torch.tensor(np.stack((x_grid, y_grid, z_grid), axis=0)[None].astype(np.float32)))
 
     def forward(self, encoding):
-        finalwarp = self.warp2(self.warp1(encoding).view(-1, 1024, 1, 1, 1)) * (2. / 1024)
-        if not self.displacementwarp:
-            finalwarp = finalwarp + self.grid
-        return finalwarp
+        final_warp = self.warp2(self.warp1(encoding).view(-1, 1024, 1, 1, 1)) * (2. / 1024)
+        if not self.displacement_warp:
+            final_warp = final_warp + self.grid
+        return final_warp
 
 
 class AffineMixWarp(nn.Module):
     def __init__(self, **kwargs):
         super(AffineMixWarp, self).__init__()
 
-        self.quat = models.utils.Quaternion()
+        self.quaternion = models.utils.Quaternion()
 
-        self.warps = nn.Sequential(
+        self.warp_s = nn.Sequential(
             nn.Linear(256, 128), nn.LeakyReLU(0.2),
             nn.Linear(128, 3 * 16))
-        self.warpr = nn.Sequential(
+        self.warp_r = nn.Sequential(
             nn.Linear(256, 128), nn.LeakyReLU(0.2),
             nn.Linear(128, 4 * 16))
-        self.warpt = nn.Sequential(
+        self.warp_t = nn.Sequential(
             nn.Linear(256, 128), nn.LeakyReLU(0.2),
             nn.Linear(128, 3 * 16))
-        self.weightbranch = nn.Sequential(
+        self.weight_branch = nn.Sequential(
             nn.Linear(256, 64), nn.LeakyReLU(0.2),
             nn.Linear(64, 16 * 32 * 32 * 32))
-        for m in [self.warps, self.warpr, self.warpt, self.weightbranch]:
+        for m in [self.warp_s, self.warp_r, self.warp_t, self.weight_branch]:
             models.utils.initseq(m)
 
-        zgrid, ygrid, xgrid = np.meshgrid(
+        z_grid, y_grid, x_grid = np.meshgrid(
             np.linspace(-1.0, 1.0, 32),
             np.linspace(-1.0, 1.0, 32),
             np.linspace(-1.0, 1.0, 32), indexing='ij')
-        self.register_buffer("grid", torch.tensor(np.stack((xgrid, ygrid, zgrid), axis=-1)[None].astype(np.float32)))
+        self.register_buffer("grid", torch.tensor(np.stack((x_grid, y_grid, z_grid), axis=-1)[None].astype(np.float32)))
 
     def forward(self, encoding):
-        warps = self.warps(encoding).view(encoding.size(0), 16, 3)
-        warpr = self.warpr(encoding).view(encoding.size(0), 16, 4)
-        warpt = self.warpt(encoding).view(encoding.size(0), 16, 3) * 0.1
-        warprot = self.quat(warpr.view(-1, 4)).view(encoding.size(0), 16, 3, 3)
+        warp_s = self.warp_s(encoding).view(encoding.size(0), 16, 3)
+        warp_r = self.warp_r(encoding).view(encoding.size(0), 16, 4)
+        warp_t = self.warp_t(encoding).view(encoding.size(0), 16, 3) * 0.1
+        warp_rot = self.quaternion(warp_r.view(-1, 4)).view(encoding.size(0), 16, 3, 3)
 
-        weight = torch.exp(self.weightbranch(encoding).view(encoding.size(0), 16, 32, 32, 32))
+        weight = torch.exp(self.weight_branch(encoding).view(encoding.size(0), 16, 32, 32, 32))
 
-        warpedweight = torch.cat([
+        warped_weight = torch.cat([
             F.grid_sample(weight[:, i:i + 1, :, :, :],
-                          torch.sum(((self.grid - warpt[:, None, None, None, i, :])[:, :, :, :, None, :] *
-                                     warprot[:, None, None, None, i, :, :]), dim=5) *
-                          warps[:, None, None, None, i, :], padding_mode='border')
+                          torch.sum(((self.grid - warp_t[:, None, None, None, i, :])[:, :, :, :, None, :] *
+                                     warp_rot[:, None, None, None, i, :, :]), dim=5) *
+                          warp_s[:, None, None, None, i, :], padding_mode='border')
             for i in range(weight.size(1))], dim=1)
 
         warp = torch.sum(torch.stack([
-            warpedweight[:, i, :, :, :, None] *
-            (torch.sum(((self.grid - warpt[:, None, None, None, i, :])[:, :, :, :, None, :] *
-                        warprot[:, None, None, None, i, :, :]), dim=5) *
-             warps[:, None, None, None, i, :])
-            for i in range(weight.size(1))], dim=1), dim=1) / torch.sum(warpedweight, dim=1).clamp(min=0.001)[:, :, :,
+            warped_weight[:, i, :, :, :, None] *
+            (torch.sum(((self.grid - warp_t[:, None, None, None, i, :])[:, :, :, :, None, :] *
+                        warp_rot[:, None, None, None, i, :, :]), dim=5) *
+             warp_s[:, None, None, None, i, :])
+            for i in range(weight.size(1))], dim=1), dim=1) / torch.sum(warped_weight, dim=1).clamp(min=0.001)[:, :, :,
                                                               :, None]
 
         return warp.permute(0, 4, 1, 2, 3)
 
 
-def getwarp(warptype, **kwargs):
+def get_warp(warptype, **kwargs):
     if warptype == "conv":
         return ConvWarp(**kwargs)
     elif warptype == "affinemix":
@@ -163,79 +163,79 @@ def getwarp(warptype, **kwargs):
 
 
 class Decoder(nn.Module):
-    def __init__(self, templatetype="conv", templateres=128,
-                 viewconditioned=False, globalwarp=True, warptype="affinemix",
-                 displacementwarp=False):
+    def __init__(self, template_type="conv", template_res=128,
+                 view_conditioned=False, global_warp=True, warp_type="affinemix",
+                 displacement_warp=False):
         super(Decoder, self).__init__()
 
-        self.templatetype = templatetype
-        self.templateres = templateres
-        self.viewconditioned = viewconditioned
-        self.globalwarp = globalwarp
-        self.warptype = warptype
-        self.displacementwarp = displacementwarp
+        self.template_type = template_type
+        self.template_res = template_res
+        self.view_conditioned = view_conditioned
+        self.global_warp = global_warp
+        self.warp_type = warp_type
+        self.displacement_warp = displacement_warp
 
-        if self.viewconditioned:
-            self.template = gettemplate(self.templatetype, encodingsize=256 + 3,
-                                        outchannels=3, templateres=self.templateres)
-            self.templatealpha = gettemplate(self.templatetype, encodingsize=256,
-                                             outchannels=1, templateres=self.templateres)
+        if self.view_conditioned:
+            self.template = get_template(self.template_type, encoding_size=256 + 3,
+                                         out_channels=3, template_res=self.template_res)
+            self.template_alpha = get_template(self.template_type, encoding_size=256,
+                                               out_channels=1, template_res=self.template_res)
         else:
-            self.template = gettemplate(self.templatetype, templateres=self.templateres)
+            self.template = get_template(self.template_type, template_res=self.template_res)
 
-        self.warp = getwarp(self.warptype, displacementwarp=self.displacementwarp)
+        self.warp = get_warp(self.warp_type, displacement_warp=self.displacement_warp)
 
-        if self.globalwarp:
-            self.quat = models.utils.Quaternion()
+        if self.global_warp:
+            self.quaternion = models.utils.Quaternion()
 
-            self.gwarps = nn.Sequential(
+            self.g_warp_s = nn.Sequential(
                 nn.Linear(256, 128), nn.LeakyReLU(0.2),
                 nn.Linear(128, 3))
-            self.gwarpr = nn.Sequential(
+            self.g_warp_r = nn.Sequential(
                 nn.Linear(256, 128), nn.LeakyReLU(0.2),
                 nn.Linear(128, 4))
-            self.gwarpt = nn.Sequential(
+            self.g_warp_t = nn.Sequential(
                 nn.Linear(256, 128), nn.LeakyReLU(0.2),
                 nn.Linear(128, 3))
 
-            initseq = models.utils.initseq
-            for m in [self.gwarps, self.gwarpr, self.gwarpt]:
-                initseq(m)
+            init_seq = models.utils.initseq
+            for m in [self.g_warp_s, self.g_warp_r, self.g_warp_t]:
+                init_seq(m)
 
-    def forward(self, encoding, viewpos, losslist=[]):
+    def forward(self, encoding, view_pos, loss_list=[]):
         scale = torch.tensor([25., 25., 25., 1.], device=encoding.device)[None, :, None, None, None]
         bias = torch.tensor([100., 100., 100., 0.], device=encoding.device)[None, :, None, None, None]
 
         # run template branch
-        viewdir = viewpos / torch.sqrt(torch.sum(viewpos ** 2, dim=-1, keepdim=True))
-        templatein = torch.cat([encoding, viewdir], dim=1) if self.viewconditioned else encoding
-        template = self.template(templatein)
-        if self.viewconditioned:
+        view_dir = view_pos / torch.sqrt(torch.sum(view_pos ** 2, dim=-1, keepdim=True))
+        template_in = torch.cat([encoding, view_dir], dim=1) if self.view_conditioned else encoding
+        template = self.template(template_in)
+        if self.view_conditioned:
             # run alpha branch without viewpoint information
-            template = torch.cat([template, self.templatealpha(encoding)], dim=1)
+            template = torch.cat([template, self.template_alpha(encoding)], dim=1)
         # scale up to 0-255 range approximately
         template = F.softplus(bias + scale * template)
 
         # compute warp voxel field
         warp = self.warp(encoding) if self.warp is not None else None
 
-        if self.globalwarp:
+        if self.global_warp:
             # compute single affine transformation
-            gwarps = 1.0 * torch.exp(0.05 * self.gwarps(encoding).view(encoding.size(0), 3))
-            gwarpr = self.gwarpr(encoding).view(encoding.size(0), 4) * 0.1
-            gwarpt = self.gwarpt(encoding).view(encoding.size(0), 3) * 0.025
-            gwarprot = self.quat(gwarpr.view(-1, 4)).view(encoding.size(0), 3, 3)
+            g_warp_s = 1.0 * torch.exp(0.05 * self.g_warp_s(encoding).view(encoding.size(0), 3))
+            g_warp_r = self.g_warp_r(encoding).view(encoding.size(0), 4) * 0.1
+            g_warp_t = self.g_warp_t(encoding).view(encoding.size(0), 3) * 0.025
+            g_warp_rot = self.quaternion(g_warp_r.view(-1, 4)).view(encoding.size(0), 3, 3)
 
         losses = {}
 
         # tv-L1 prior
-        if "tvl1" in losslist:
-            logalpha = torch.log(1e-5 + template[:, -1, :, :, :])
+        if "tvl1" in loss_list:
+            log_alpha = torch.log(1e-5 + template[:, -1, :, :, :])
             losses["tvl1"] = torch.mean(torch.sqrt(1e-5 +
-                                                   (logalpha[:, :-1, :-1, 1:] - logalpha[:, :-1, :-1, :-1]) ** 2 +
-                                                   (logalpha[:, :-1, 1:, :-1] - logalpha[:, :-1, :-1, :-1]) ** 2 +
-                                                   (logalpha[:, 1:, :-1, :-1] - logalpha[:, :-1, :-1, :-1]) ** 2))
+                                                   (log_alpha[:, :-1, :-1, 1:] - log_alpha[:, :-1, :-1, :-1]) ** 2 +
+                                                   (log_alpha[:, :-1, 1:, :-1] - log_alpha[:, :-1, :-1, :-1]) ** 2 +
+                                                   (log_alpha[:, 1:, :-1, :-1] - log_alpha[:, :-1, :-1, :-1]) ** 2))
 
         return {"template": template, "warp": warp,
-                **({"gwarps": gwarps, "gwarprot": gwarprot, "gwarpt": gwarpt} if self.globalwarp else {}),
+                **({"g_warp_s": g_warp_s, "g_warp_rot": g_warp_rot, "g_warp_t": g_warp_t} if self.global_warp else {}),
                 "losses": losses}

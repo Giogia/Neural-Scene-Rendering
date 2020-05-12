@@ -46,7 +46,7 @@ tmtagsHistory
 *.mp4
 *.avi
 *.jpg
-*.png
+.png
 .exr
 
 # 3D Objects

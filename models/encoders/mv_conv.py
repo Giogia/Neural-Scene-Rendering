@@ -8,6 +8,7 @@ import torch
 import torch.nn as nn
 
 import models.utils
+from models.debug.print import PrintLayer
 
 
 class Encoder(torch.nn.Module):
