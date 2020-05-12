@@ -94,7 +94,7 @@ class Progress:
     """Write out diagnostic images during training."""
     batch_size = 8
 
-    def get_ae_args(self): return dict(outputlist=["irgbrec"])
+    def get_ae_args(self): return dict(output_list=["irgbrec"])
 
     def get_dataset(self): return get_dataset(max_frames=1)
 
@@ -116,7 +116,7 @@ class Render:
         return get_autoencoder(dataset)
 
     def get_ae_args(self):
-        return dict(outputlist=["irgbrec"], viewtemplate=self.view_template)
+        return dict(output_list=["irgbrec"], view_template=self.view_template)
 
     def get_dataset(self):
         import data.utils
