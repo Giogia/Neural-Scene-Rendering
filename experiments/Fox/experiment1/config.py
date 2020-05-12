@@ -81,7 +81,7 @@ class ProgressWriter:
                 np.concatenate((
                     kwargs["irgbrec"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
                     kwargs["image"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]), axis=1))
-            if len(row) == 4:
+            if len(row) == 2:
                 rows.append(np.concatenate(row, axis=1))
                 row = []
         img_out = np.concatenate(rows, axis=0)
