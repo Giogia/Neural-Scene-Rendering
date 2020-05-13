@@ -137,6 +137,7 @@ if __name__ == "__main__":
     if args.resume:
         checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
         scheduler = checkpoint['scheduler']
+        scheduler.last_epoch = log.iteration_number
     else:
         base_lr = ae_optimizer.param_groups[0]['lr']
         max_lr = 2e-4 if args.super else base_lr
