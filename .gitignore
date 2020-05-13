@@ -46,8 +46,8 @@ tmtagsHistory
 *.mp4
 *.avi
 *.jpg
-.png
-.exr
+*.png
+*.exr
 
 # 3D Objects
 ######################
@@ -68,7 +68,7 @@ tmtagsHistory
 venv
 
 # additional files
-.csv
+*.csv
 
 # Pytorch
 *.pt
