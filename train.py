@@ -139,7 +139,7 @@ if __name__ == "__main__":
         scheduler = checkpoint['scheduler']
     else:
         base_lr = ae_optimizer.param_groups[0]['lr']
-        max_lr = 2.5e-4 if args.super else base_lr
+        max_lr = 2e-4 if args.super else base_lr
         scheduler = torch.optim.lr_scheduler.CyclicLR(ae_optimizer, base_lr, max_lr,
                                                       step_size_up=100, step_size_down=100, cycle_momentum=False)
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer, max_lr=max_lr, total_steps=profile.max_iter)
