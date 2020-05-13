@@ -61,7 +61,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     outpath = os.path.dirname(args.experconfig)
-    log = Logger("{}/log.txt".format(outpath), args.resume)
+    # log = Logger("{}/log.txt".format(outpath), args.resume)
     print("Python", sys.version)
     print("PyTorch", torch.__version__)
     print(" ".join(sys.argv))
@@ -79,7 +79,8 @@ if __name__ == "__main__":
         start_time = time.time()
         checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
         iter_num = torch.load("{}/checkpoint.pt".format(outpath))['iteration']
-        print("Checkpoint Loaded ({:.2f} s)".format(time.time() - start_time))
+        print("Checkpoint Loaded ({:.2f} s): ".format(time.time() - start_time) +
+              "starting at iteration {}".format(iter_num))
     else:
         iter_num = 0
 
