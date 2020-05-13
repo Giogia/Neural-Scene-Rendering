@@ -61,7 +61,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     outpath = os.path.dirname(args.experconfig)
-    # log = Logger("{}/log.txt".format(outpath), args.resume)
+    log = Logger("{}/log.txt".format(outpath), args.resume)
     print("Python", sys.version)
     print("PyTorch", torch.__version__)
     print(" ".join(sys.argv))
@@ -166,7 +166,7 @@ if __name__ == "__main__":
             lr = ae_optimizer.param_groups[0]['lr']
 
             # print current information
-            print("Iteration {}: "
+            print("Iteration {:06d}: "
                   "lr = {:.5f}, ".format(iter_num, lr) +
                   "loss = {:.5f}, ".format(float(loss.item())) +
                   ", ".join(["{} = {:.5f}".format(
