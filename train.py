@@ -7,7 +7,6 @@ import time
 
 import numpy as np
 import torch.utils.data
-from apex import amp
 from models.lr_finder import LRFinder
 
 sys.dont_write_bytecode = True
@@ -119,8 +118,9 @@ if __name__ == "__main__":
     ae_loss = profile.get_loss()
     print("Loss instantiated ({:.2f} s)".format(time.time() - start_time))
 
-    # GPU optimization - mixed precision training
+    # mixed precision training
     if args.mpt and device == 'cuda':
+        from apex import amp
         ae, ae_optimizer = amp.initialize(ae, ae_optimizer, opt_level='O1')
 
     # perform a learning rate test
