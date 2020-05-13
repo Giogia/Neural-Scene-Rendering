@@ -139,7 +139,7 @@ if __name__ == "__main__":
         scheduler = checkpoint['scheduler']
     else:
         base_lr = ae_optimizer.param_groups[0]['lr']
-        max_lr = 2*base_lr if args.super else base_lr
+        max_lr = 2.5e-4 if args.super else base_lr
         scheduler = torch.optim.lr_scheduler.CyclicLR(ae_optimizer, base_lr, max_lr,
                                                       step_size_up=100, step_size_down=100, cycle_momentum=False)
         # scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer, max_lr=max_lr, total_steps=profile.max_iter)
@@ -169,7 +169,7 @@ if __name__ == "__main__":
                   ", ".join(["{} = {:.5f}".format(
                       k, float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v, tuple) else torch.mean(v)))
                              for k, v in output["losses"].items()]), end="")
-            
+
             if iter_num % 10 == 0:
                 end_time = time.time()
                 ips = 10. / (end_time - start_time)
