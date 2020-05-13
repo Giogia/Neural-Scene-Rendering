@@ -11,9 +11,7 @@ from apex import amp
 from models.lr_finder import LRFinder
 
 sys.dont_write_bytecode = True
-
 torch.backends.cudnn.benchmark = True  # gotta go fast!
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
@@ -125,15 +123,14 @@ if __name__ == "__main__":
     if args.mpt and device == 'cuda':
         ae, ae_optimizer = amp.initialize(ae, ae_optimizer, opt_level='O1')
 
-    # super convergence
-    max_lr = 4e-4
+    # perform a learning rate test
     if args.lrtest:
         lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
-        lr_finder.range_test(dataloader, end_lr=10*max_lr, num_iter=100)
+        lr_finder.range_test(dataloader, num_iter=1000)
         lr_finder.plot()
         lr_finder.reset()
-        max_lr = 0.1 * (0.8 * lr_finder.max_lr() if 0.8 * lr_finder.max_lr() > max_lr else max_lr)
-        print("Max learning rate set to {:.5f}".format(max_lr))
+        print("Max learning rate found: {:.5f}".format(lr_finder.max_lr()))
+        sys.exit()
 
     # build scheduler
     start_time = time.time()
@@ -141,7 +138,11 @@ if __name__ == "__main__":
         checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
         scheduler = checkpoint['scheduler']
     else:
-        scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer, max_lr=max_lr, total_steps=profile.max_iter)
+        base_lr = ae_optimizer.param_groups[0]['lr']
+        max_lr = 2*base_lr if args.super else base_lr
+        scheduler = torch.optim.lr_scheduler.CyclicLR(ae_optimizer, base_lr, max_lr,
+                                                      step_size_up=100, step_size_down=100)
+        # scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer, max_lr=max_lr, total_steps=profile.max_iter)
     print("Scheduler instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # train
@@ -159,8 +160,11 @@ if __name__ == "__main__":
             # compute final loss
             loss = ae_loss(output, loss_weights)
 
+            # get learning rate from optimizer
+            lr = ae_optimizer.param_groups[0]['lr']
+
             # print current information
-            print("Iteration {}: lr = {:.5f}, ".format(iter_num, ae_optimizer.param_groups[0]['lr']) +
+            print("Iteration {}: lr = {:.5f}, ".format(iter_num, lr) +
                   "loss = {:.5f}, ".format(float(loss.item())) +
                   ", ".join(["{} = {:.5f}".format(k,
                                                   float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v,
