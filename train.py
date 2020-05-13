@@ -22,11 +22,6 @@ class Logger(object):
             print(path + " exists")
             sys.exit(0)
 
-        if resume:
-            self.iteration_number = torch.load("{}/checkpoint.pt".format(outpath))['iteration']
-        else:
-            self.iteration_number = 0
-
         self.log = open(path, "a") if resume else open(path, "w")
         self.stdout = sys.stdout
         sys.stdout = self
@@ -79,6 +74,15 @@ if __name__ == "__main__":
     progress_prof = experiment_config.Progress()
     print("Config loaded ({:.2f} s)".format(time.time() - start_time))
 
+    # load checkpoint
+    if args.resume:
+        start_time = time.time()
+        checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
+        iter_num = torch.load("{}/checkpoint.pt".format(outpath))['iteration']
+        print("Checkpoint Loaded ({:.2f} s)".format(time.time() - start_time))
+    else:
+        iter_num = 0
+
     # build dataset & testing dataset
     start_time = time.time()
     test_dataset = progress_prof.get_dataset()
@@ -100,7 +104,6 @@ if __name__ == "__main__":
     ae = profile.get_autoencoder(dataset)
     ae = torch.nn.DataParallel(ae, device_ids=args.devices).to(device).train()
     if args.resume:
-        checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
         ae.module.load_state_dict(checkpoint['model'], strict=False)
     print("Autoencoder instantiated ({:.2f} s)".format(time.time() - start_time))
 
@@ -109,7 +112,6 @@ if __name__ == "__main__":
     ae_optimizer = profile.get_optimizer(ae.module)
     loss_weights = profile.get_loss_weights()
     if args.resume:
-        checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
         ae_optimizer.load_state_dict(checkpoint['optimizer'])
     print("Optimizer instantiated ({:.2f} s)".format(time.time() - start_time))
 
@@ -135,9 +137,8 @@ if __name__ == "__main__":
     # build scheduler
     start_time = time.time()
     if args.resume:
-        checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
         scheduler = checkpoint['scheduler']
-        scheduler.last_epoch = log.iteration_number
+        scheduler.last_epoch = iter_num
     else:
         base_lr = ae_optimizer.param_groups[0]['lr']
         max_lr = 2e-4 if args.super else base_lr
@@ -149,7 +150,6 @@ if __name__ == "__main__":
     # train
     start_time = time.time()
     eval_points = np.geomspace(1., profile.max_iter, 100).astype(np.int32)
-    iter_num = log.iteration_number
     prevloss = np.inf
 
     for epoch in range(1000):
@@ -165,7 +165,8 @@ if __name__ == "__main__":
             lr = ae_optimizer.param_groups[0]['lr']
 
             # print current information
-            print("Iteration {}: lr = {:.5f}, ".format(iter_num, lr) +
+            print("Iteration {}: "
+                  "lr = {:.5f}, ".format(iter_num, lr) +
                   "loss = {:.5f}, ".format(float(loss.item())) +
                   ", ".join(["{} = {:.5f}".format(
                       k, float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v, tuple) else torch.mean(v)))
