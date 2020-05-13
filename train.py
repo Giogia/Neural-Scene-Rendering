@@ -166,11 +166,10 @@ if __name__ == "__main__":
             # print current information
             print("Iteration {}: lr = {:.5f}, ".format(iter_num, lr) +
                   "loss = {:.5f}, ".format(float(loss.item())) +
-                  ", ".join(["{} = {:.5f}".format(k,
-                                                  float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v,
-                                                                                                        tuple) else torch.mean(
-                                                      v)))
+                  ", ".join(["{} = {:.5f}".format(
+                      k, float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v, tuple) else torch.mean(v)))
                              for k, v in output["losses"].items()]), end="")
+            
             if iter_num % 10 == 0:
                 end_time = time.time()
                 ips = 10. / (end_time - start_time)
