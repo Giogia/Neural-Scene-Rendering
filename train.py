@@ -137,7 +137,7 @@ if __name__ == "__main__":
 
     # build scheduler
     start_time = time.time()
-    base_lr = ae_optimizer.param_groups[0]['lr']
+    base_lr = 1e-4
     max_lr = 2e-4 if args.super else base_lr
     scheduler = profile.get_scheduler(ae_optimizer, base_lr, max_lr, iter_num)
     print("Scheduler instantiated ({:.2f} s)".format(time.time() - start_time))
