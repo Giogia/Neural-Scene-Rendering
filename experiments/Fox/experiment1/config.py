@@ -69,7 +69,7 @@ class Train:
         import models.losses.aeloss as loss
         return loss.AutoencoderLoss()
 
-    def get_scheduler(self, optimizer, base_lr, max_lr, iter_num, step=10):
+    def get_scheduler(self, optimizer, base_lr, max_lr, iter_num, step=100):
         from torch.optim.lr_scheduler import CyclicLR
         return CyclicLR(optimizer, base_lr, max_lr,
                         step_size_up=step,

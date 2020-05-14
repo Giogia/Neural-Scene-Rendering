@@ -8,11 +8,14 @@ import os
 import data.blender as data_model
 import data.parameters as parameters
 
-def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None):
+
+def get_dataset(camera_filter=lambda x: True, frame_list=None, subsample_type=None):
+    if frame_list is None:
+        frame_list = [i for i in range(parameters.START_FRAME, parameters.END_FRAME)]
     return data_model.Dataset(
         camera_filter=camera_filter,
         camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
-        frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)][:max_frames],
+        frame_list=frame_list,
         key_filter=["background", "fixed_cam_image", "camera", "image", "pixel_coords"],
         fixed_cameras=["1", "3", "7"],
         image_mean=50.,
@@ -66,7 +69,7 @@ class Train:
         import models.losses.aeloss as loss
         return loss.AutoencoderLoss()
 
-    def get_scheduler(self, optimizer, base_lr, max_lr, iter_num, step=10):
+    def get_scheduler(self, optimizer, base_lr, max_lr, iter_num, step=100):
         from torch.optim.lr_scheduler import CyclicLR
         return CyclicLR(optimizer, base_lr, max_lr,
                         step_size_up=step,
@@ -99,7 +102,7 @@ class Progress:
 
     def get_ae_args(self): return dict(output_list=["irgbrec"])
 
-    def get_dataset(self): return get_dataset(max_frames=1)
+    def get_dataset(self): return get_dataset(frame_list=[parameters.END_FRAME])
 
     def get_writer(self): return ProgressWriter()
 
@@ -109,9 +112,8 @@ class Render:
 
     e.g., python render.py {configpath} Render --maxframes 128"""
 
-    def __init__(self, cam=None, max_frames=-1, show_target=False, view_template=False):
+    def __init__(self, cam=None, show_target=False, view_template=False):
         self.cam = cam
-        self.max_frames = max_frames
         self.show_target = show_target
         self.view_template = view_template
 
@@ -124,7 +126,7 @@ class Render:
     def get_dataset(self):
         import data.utils
         import eval.cameras.rotate as cameralib
-        dataset = get_dataset(camera_filter=lambda x: x == self.cam, max_frames=self.max_frames)
+        dataset = get_dataset(camera_filter=lambda x: x == self.cam)
         if self.cam is None:
             cam_dataset = cameralib.Dataset(len(dataset))
             return data.utils.JoinDataset(cam_dataset, dataset)

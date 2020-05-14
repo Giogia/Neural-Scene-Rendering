@@ -204,7 +204,7 @@ if __name__ == "__main__":
             prevloss = loss.item()
 
             # save intermediate results
-            if iter_num % 10 == 0:
+            if iter_num % 100 == 0:
                 checkpoint = {
                     'iteration': iter_num,
                     'model': ae.module.state_dict(),
