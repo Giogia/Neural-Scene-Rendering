@@ -137,15 +137,9 @@ if __name__ == "__main__":
 
     # build scheduler
     start_time = time.time()
-    if args.resume:
-        scheduler = checkpoint['scheduler']
-        scheduler.last_epoch = iter_num
-    else:
-        base_lr = ae_optimizer.param_groups[0]['lr']
-        max_lr = 2e-4 if args.super else base_lr
-        scheduler = torch.optim.lr_scheduler.CyclicLR(ae_optimizer, base_lr, max_lr,
-                                                      step_size_up=100, step_size_down=100, cycle_momentum=False)
-        # scheduler = torch.optim.lr_scheduler.OneCycleLR(ae_optimizer, max_lr=max_lr, total_steps=profile.max_iter)
+    base_lr = ae_optimizer.param_groups[0]['lr']
+    max_lr = 2e-4 if args.super else base_lr
+    scheduler = profile.get_scheduler(ae_optimizer, base_lr, max_lr, iter_num)
     print("Scheduler instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # train
@@ -205,17 +199,17 @@ if __name__ == "__main__":
 
                 ae.module.load_state_dict(checkpoint['model'], strict=False)
                 ae_optimizer.load_state_dict(checkpoint['optimizer'])
-                scheduler = checkpoint['scheduler']
+                scheduler = profile.get_scheduler(ae_optimizer, base_lr, max_lr, checkpoint['iteration'])
 
             prevloss = loss.item()
 
             # save intermediate results
-            if iter_num % 100 == 0:
+            if iter_num % 10 == 0:
                 checkpoint = {
                     'iteration': iter_num,
                     'model': ae.module.state_dict(),
-                    'optimizer': ae_optimizer.state_dict(),
-                    'scheduler': scheduler}
+                    'optimizer': ae_optimizer.state_dict()
+                }
                 torch.save(checkpoint, "{}/checkpoint.pt".format(outpath))
 
             iter_num += 1
