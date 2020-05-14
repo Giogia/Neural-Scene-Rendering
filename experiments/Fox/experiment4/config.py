@@ -25,7 +25,7 @@ def get_dataset(camera_filter=lambda x: True, max_frames=-1, subsample_type=None
 
 def get_autoencoder(dataset):
     import models.autoencoder as ae_model
-    import models.encoders.mv_conv as encoder_lib
+    import models.encoders.mv_conv_hd as encoder_lib
     import models.decoders.voxel as decoder_lib
     import models.volsamplers.warpvoxel as vol_sampler_lib
     import models.colorcals.color_calibrator as color_cal_lib
@@ -36,11 +36,6 @@ def get_autoencoder(dataset):
         vol_sampler_lib.VolSampler(),
         color_cal_lib.Colorcal(dataset.get_cameras()),
         4. / 256)
-
-
-def get_loss():
-    import models.losses.aeloss as loss
-    return loss.AutoencoderLoss()
 
 
 # profiles
@@ -67,8 +62,16 @@ class Train:
     def get_loss_weights(self):
         return {"irgbmse": 1.0, "kldiv": 0.001, "alphapr": 0.01, "tvl1": 0.01}
 
-    def get_loss(self): return get_loss()
+    def get_loss(self):
+        import models.losses.aeloss as loss
+        return loss.AutoencoderLoss()
 
+    def get_scheduler(self, optimizer, base_lr, max_lr, iter_num, step=10):
+        from torch.optim.lr_scheduler import CyclicLR
+        return CyclicLR(optimizer, base_lr, max_lr,
+                        step_size_up=step,
+                        cycle_momentum=False,
+                        last_epoch=iter_num - 1)
 
 class ProgressWriter:
     def batch(self, iter_num, **kwargs):
