@@ -8,19 +8,19 @@ import torch
 import torch.nn as nn
 
 import models.utils
-from models.debug.print import PrintLayer
 
 
 class Encoder(torch.nn.Module):
 
-    def __init__(self, ninputs, tied=False):
+    def __init__(self, ninputs, n_channels=3, tied=False):
         super(Encoder, self).__init__()
 
         self.ninputs = ninputs
+        self.n_channels = n_channels
         self.tied = tied
 
         self.down1 = nn.ModuleList([nn.Sequential(
-            nn.Conv2d(3, 64, 4, 2, 1), nn.LeakyReLU(0.2),
+            nn.Conv2d(n_channels, 64, 4, 2, 1), nn.LeakyReLU(0.2),
             nn.Conv2d(64, 64, 4, 2, 1), nn.LeakyReLU(0.2),
             nn.Conv2d(64, 128, 4, 2, 1), nn.LeakyReLU(0.2),
             nn.Conv2d(128, 128, 4, 2, 1), nn.LeakyReLU(0.2),
@@ -48,8 +48,9 @@ class Encoder(torch.nn.Module):
         models.utils.initmod(self.logstd)
 
     def forward(self, x, losslist=[]):
+
         x = self.pad(x)
-        x = [self.down1[0 if self.tied else i](x[:, i * 3:(i + 1) * 3, :, :]).view(-1, 256 * 2 * 4) for i in
+        x = [self.down1[0 if self.tied else i](x[:, i * self.n_channels:(i + 1) * self.n_channels, :, :]).view(-1, 256 * 2 * 4) for i in
              range(self.ninputs)]
         x = torch.cat(x, dim=1)
         x = self.down2(x)

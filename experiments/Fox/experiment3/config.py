@@ -16,7 +16,7 @@ def get_dataset(camera_filter=lambda x: True, frame_list=None, subsample_type=No
         camera_filter=camera_filter,
         camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
         frame_list=frame_list,
-        key_filter=["background", "fixed_cam_image", "camera", "image", "pixel_coords"],
+        key_filter=["background", "fixed_cam_image", "camera", "image", "depth", "pixel_coords"],
         fixed_cameras=["1", "3", "7"],
         image_mean=50.,
         image_std=25.,
@@ -34,7 +34,7 @@ def get_autoencoder(dataset):
     import models.colorcals.color_calibrator as color_cal_lib
     return ae_model.Autoencoder(
         dataset,
-        encoder_lib.Encoder(3),
+        encoder_lib.Encoder(ninputs=3, n_channels=4),
         decoder_lib.Decoder(global_warp=False),
         vol_sampler_lib.VolSampler(),
         color_cal_lib.Colorcal(dataset.get_cameras()),

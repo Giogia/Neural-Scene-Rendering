@@ -9,7 +9,8 @@ import torch.utils.data
 import os
 
 from .csv_utils import read_csv
-from .exr_utils import exr_to_image
+from .exr_utils import exr_to_image, exr_to_depth
+from . import parameters
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -112,15 +113,22 @@ class Dataset(torch.utils.data.Dataset):
         # fixed camera images
         if "fixed_cam_image" in self.key_filter:
             n_input = len(self.fixed_cameras)
+            n_channels = 4 if "depth" in self.key_filter else 3
 
-            fixed_cam_image = np.zeros((3 * n_input, 270, 480), dtype=np.float32)
+            fixed_cam_image = np.zeros((n_channels * n_input, 270, 480), dtype=np.float32)
             for i in range(n_input):
                 image_path = os.path.join(self.path, 'camera_' + str(self.fixed_cameras[i]), str(frame) + '.exr')
-                image = 255 * exr_to_image(image_path)[::2, ::2, :].transpose((2, 0, 1)).astype(
-                    np.float32)
+                image = 255 * exr_to_image(image_path)[::2, ::2, :].transpose((2, 0, 1)).astype(np.float32)
+                if "depth" in self.key_filter:
+                    depth = exr_to_depth(image_path, far_threshold=2 * parameters.DISTANCE)
+                    depth = np.expand_dims(depth, axis=-1)[::2, ::2, :].transpose((2, 0, 1)).astype(np.float32)
+                    depth = 255 * depth / np.max(depth)
+                    image = np.append(image, depth, axis=0)
                 if np.sum(image) == 0:
                     valid_input = False
-                fixed_cam_image[i * 3:(i + 1) * 3, :, :] = image
+
+                fixed_cam_image[i * n_channels:(i + 1) * n_channels, :, :] = image
+
             fixed_cam_image[:] -= self.image_mean
             fixed_cam_image[:] /= self.image_std
             result["fixed_cam_image"] = fixed_cam_image
@@ -132,7 +140,8 @@ class Dataset(torch.utils.data.Dataset):
             if "camera" in self.key_filter:
                 # camera data
                 result["camera_rotation"] = np.dot(self.model_transformation[:3, :3].T, self.cam_rot[cam].T).T
-                result["camera_position"] = np.dot(self.model_transformation[:3, :3].T, self.campos[cam] - self.model_transformation[:3, 3])
+                result["camera_position"] = np.dot(self.model_transformation[:3, :3].T,
+                                                   self.campos[cam] - self.model_transformation[:3, 3])
                 result["focal"] = self.focal[cam]
                 result["principal_point"] = self.princ_pt[cam]
                 result["camera_index"] = self.cameras.index(cam)
