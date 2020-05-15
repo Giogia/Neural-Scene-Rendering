@@ -36,11 +36,11 @@ class Dataset(torch.utils.data.Dataset):
         x = np.cos(t * 0.5 * np.pi + 0.25 * np.pi) * 3.
         y = 0.5
         z = np.sin(t * 0.5 * np.pi + 0.25 * np.pi) * 3.
-        campos = np.array([x, y, z], dtype=np.float32)
+        camera_position = np.array([x, y, z], dtype=np.float32)
 
         look_at = np.array([0., 0., 0.], dtype=np.float32)
         up = np.array([0., -1., 0.], dtype=np.float32)
-        forward = look_at - campos
+        forward = look_at - camera_position
         forward /= np.linalg.norm(forward)
         right = np.cross(up, forward)
         right /= np.linalg.norm(right)
@@ -52,7 +52,7 @@ class Dataset(torch.utils.data.Dataset):
         px, py = np.meshgrid(np.arange(self.width).astype(np.float32), np.arange(self.height).astype(np.float32))
         pixel_coords = np.stack((px, py), axis=-1)
 
-        return {"campos": campos,
+        return {"camera_position": camera_position,
                 "camera_rotation": camera_rotation,
                 "focal": self.focal,
                 "principal_point": self.principal_point,
