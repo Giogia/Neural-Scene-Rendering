@@ -113,9 +113,8 @@ class Dataset(torch.utils.data.Dataset):
         # fixed camera images
         if "fixed_cam_image" in self.key_filter:
             n_input = len(self.fixed_cameras)
-            n_channels = 4 if "depth" in self.key_filter else 3
 
-            fixed_cam_image = np.zeros((n_channels * n_input, 270, 480), dtype=np.float32)
+            images = []
             for i in range(n_input):
                 image_path = os.path.join(self.path, 'camera_' + str(self.fixed_cameras[i]), str(frame) + '.exr')
                 image = 255 * exr_to_image(image_path)[::2, ::2, :].transpose((2, 0, 1)).astype(np.float32)
@@ -126,8 +125,9 @@ class Dataset(torch.utils.data.Dataset):
                     image = np.append(image, depth, axis=0)
                 if np.sum(image) == 0:
                     valid_input = False
+                images.append(image)
 
-                fixed_cam_image[i * n_channels:(i + 1) * n_channels, :, :] = image
+            fixed_cam_image = np.concatenate(([image for image in images]), axis=0)
 
             fixed_cam_image[:] -= self.image_mean
             fixed_cam_image[:] /= self.image_std
