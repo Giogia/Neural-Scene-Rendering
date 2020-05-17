@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # parse arguments
     parser = argparse.ArgumentParser(description='Render')
     parser.add_argument('experconfig', type=str, help='experiment config')
-    parser.add_argument('profile', type=str, help='config profile')
+    parser.add_argument('profile', type=str, default="Render", help='config profile')
     parser.add_argument('--devices', type=int, nargs='+', default=[0], help='devices')
     parser.add_argument('--batchsize', type=int, default=16, help='batchsize')
     parsed, unknown = parser.parse_known_args()
