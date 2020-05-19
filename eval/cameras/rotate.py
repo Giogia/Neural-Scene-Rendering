@@ -8,7 +8,7 @@ import numpy as np
 
 import torch
 import torch.utils.data
-
+from data.parameters import DISTANCE
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, length, period=128):
@@ -32,10 +32,12 @@ class Dataset(torch.utils.data.Dataset):
             "size": np.array([self.width, self.height])}}
 
     def __getitem__(self, idx):
+
         t = (np.cos(idx * 2. * np.pi / self.period) * 0.5 + 0.5)
-        x = np.cos(t * 0.5 * np.pi + 0.25 * np.pi) * 3.
-        y = np.sin(t * 0.5 * np.pi + 0.25 * np.pi) * 3.
-        z = 0.5
+        x = np.cos(t * 0.5 * np.pi + 0.25 * np.pi) * DISTANCE
+        y = 0
+        z = np.sin(t * 0.5 * np.pi + 0.25 * np.pi) * DISTANCE
+
         camera_position = np.array([x, y, z], dtype=np.float32)
 
         look_at = np.array([0., 0., 0.], dtype=np.float32)
