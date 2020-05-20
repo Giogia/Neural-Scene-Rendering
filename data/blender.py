@@ -60,7 +60,7 @@ class Dataset(torch.utils.data.Dataset):
             self.campos[cam] = (-np.dot(cameras[cam]['extrinsic'][:3, :3].T, cameras[cam]['extrinsic'][:3, 3])).astype(
                 np.float32)
             self.cam_rot[cam] = (cameras[cam]['extrinsic'][:3, :3]).astype(np.float32)
-            self.focal[cam] = world_scale * np.diag(cameras[cam]['intrinsic'][:2, :2]).astype(np.float32)
+            self.focal[cam] = np.diag(cameras[cam]['intrinsic'][:2, :2]).astype(np.float32)
             self.princ_pt[cam] = cameras[cam]['intrinsic'][:2, 2].astype(np.float32)
 
         # transformation that places the center of the object at the origin
