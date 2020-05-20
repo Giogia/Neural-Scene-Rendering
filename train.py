@@ -71,7 +71,7 @@ if __name__ == "__main__":
     start_time = time.time()
     experiment_config = import_module(args.experconfig, "config")
     profile = getattr(experiment_config, args.profile)(**{k: v for k, v in vars(args).items() if k not in parsed})
-    progress_prof = experiment_config.Progress()
+    progress = experiment_config.Progress()
     print("Config loaded ({:.2f} s)".format(time.time() - start_time))
 
     # load checkpoint
@@ -86,8 +86,8 @@ if __name__ == "__main__":
 
     # build dataset & testing dataset
     start_time = time.time()
-    test_dataset = progress_prof.get_dataset()
-    dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=progress_prof.batch_size, shuffle=False)
+    test_dataset = progress.get_dataset()
+    dataloader = torch.utils.data.DataLoader(test_dataset, batch_size=progress.batch_size, shuffle=False)
     test_batch = next(iter(dataloader))
 
     dataset = profile.get_dataset()
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
     # data writer
     start_time = time.time()
-    writer = progress_prof.get_writer()
+    writer = progress.get_writer()
     print("Writer instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build autoencoder
@@ -179,7 +179,7 @@ if __name__ == "__main__":
             if iter_num in eval_points:
                 with torch.no_grad():
                     test_output = ae([], **{k: x.to(device) for k, x in test_batch.items()},
-                                     **progress_prof.get_ae_args())
+                                     **progress.get_ae_args())
 
                 b = data["camera_position"].size(0)
                 writer.batch(iter_num, **test_batch, **test_output)
@@ -216,6 +216,3 @@ if __name__ == "__main__":
 
         if iter_num >= profile.max_iter:
             break
-
-    # cleanup
-    writer.finalize()
