@@ -49,7 +49,7 @@ class Dataset(torch.utils.data.Dataset):
         up = np.cross(forward, right)
         up /= np.linalg.norm(up)
 
-        camera_rotation = np.array([right, forward, up], dtype=np.float32)
+        camera_rotation = np.array([right, up, forward], dtype=np.float32)
 
         px, py = np.meshgrid(np.arange(self.width).astype(np.float32), np.arange(self.height).astype(np.float32))
         pixel_coords = np.stack((px, py), axis=-1)
