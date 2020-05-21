@@ -1,14 +1,8 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
+
 import numpy as np
 
-import torch
 import torch.utils.data
-from data.parameters import DISTANCE
+
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, length, period=128):
@@ -34,8 +28,8 @@ class Dataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
 
         t = (np.cos(idx * 2. * np.pi / self.period) * 0.5 + 0.5)
-        x = np.cos(t * np.pi)
-        y = np.sin(t * np.pi)
+        x = np.cos(t * 2 * np.pi)
+        y = np.sin(t * 2 * np.pi)
         z = 0
 
         camera_position = np.array([x, y, z], dtype=np.float32)
