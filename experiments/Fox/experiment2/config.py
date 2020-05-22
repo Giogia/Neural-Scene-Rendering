@@ -1,10 +1,5 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
 import os
+
 import data.blender as data_model
 import data.parameters as parameters
 
@@ -23,18 +18,18 @@ def get_dataset(camera_filter=lambda x: True, frame_list=None, subsample_type=No
         subsample_type=subsample_type,
         subsample_size=128,
         world_scale=parameters.SCALE,
-        path=os.path.join('experiments', 'Fox', 'data2'))
+        path=os.path.join('experiments', 'Fox', 'data'))
 
 
 def get_autoencoder(dataset):
     import models.autoencoder as ae_model
-    import models.encoders.mv_conv_hd as encoder_lib
+    import models.encoders.conv as encoder_lib
     import models.decoders.voxel as decoder_lib
     import models.volsamplers.warpvoxel as vol_sampler_lib
     import models.colorcals.color_calibrator as color_cal_lib
     return ae_model.Autoencoder(
         dataset,
-        encoder_lib.Encoder(ninputs=3, n_channels=3),
+        encoder_lib.Encoder(n_inputs=3, n_channels=3),
         decoder_lib.Decoder(global_warp=False),
         vol_sampler_lib.VolSampler(),
         color_cal_lib.Colorcal(dataset.get_cameras()),
@@ -56,14 +51,14 @@ class Train:
         import itertools
         import torch.optim
         lr = 0.0001
-        aeparams = itertools.chain(
+        ae_params = itertools.chain(
             [{"params": x} for x in ae.encoder.parameters()],
             [{"params": x} for x in ae.decoder.parameters()],
             [{"params": x} for x in ae.color_calibrator.parameters()])
-        return torch.optim.AdamW(aeparams, lr=lr, betas=(0.9, 0.999))
+        return torch.optim.AdamW(ae_params, lr=lr, betas=(0.9, 0.999))
 
     def get_loss_weights(self):
-        return {"irgbmse": 1.0, "kldiv": 0.001, "alphapr": 0.01, "tvl1": 0.01}
+        return {"i_rgb_mse": 1.0, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
 
     def get_loss(self):
         import models.losses.aeloss as loss
@@ -76,6 +71,7 @@ class Train:
                         cycle_momentum=False,
                         last_epoch=iter_num - 1)
 
+
 class ProgressWriter:
     def batch(self, iter_num, **kwargs):
         import numpy as np
@@ -85,7 +81,7 @@ class ProgressWriter:
         for i in range(kwargs["image"].size(0)):
             row.append(
                 np.concatenate((
-                    kwargs["irgbrec"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
+                    kwargs["i_rgb_rec"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
                     kwargs["image"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]), axis=1))
             if len(row) == 2:
                 rows.append(np.concatenate(row, axis=1))
@@ -100,7 +96,7 @@ class Progress:
     """Write out diagnostic images during training."""
     batch_size = 8
 
-    def get_ae_args(self): return dict(output_list=["irgbrec"])
+    def get_ae_args(self): return dict(output_list=["i_rgb_rec"])
 
     def get_dataset(self): return get_dataset(frame_list=[parameters.END_FRAME])
 
@@ -121,7 +117,7 @@ class Render:
         return get_autoencoder(dataset)
 
     def get_ae_args(self):
-        return dict(output_list=["irgbrec"], view_template=self.view_template)
+        return dict(output_list=["i_rgb_rec"], view_template=self.view_template)
 
     def get_dataset(self):
         import data.utils
@@ -140,4 +136,4 @@ class Render:
                          "render_{}{}.mp4".format(
                              "rotate" if self.cam is None else self.cam,
                              "_template" if self.view_template else "")),
-            showtarget=self.show_target)
+            show_target=self.show_target)

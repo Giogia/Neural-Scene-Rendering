@@ -7,6 +7,7 @@ import time
 
 import numpy as np
 import torch.utils.data
+
 from models.lr_finder import LRFinder
 
 sys.dont_write_bytecode = True
@@ -50,6 +51,7 @@ if __name__ == "__main__":
     parser.add_argument('--profile', type=str, default="Train", help='config profile')
     parser.add_argument('--devices', type=int, nargs='+', default=[0], help='devices')
     parser.add_argument('--resume', action='store_true', help='resume training')
+    parser.add_argument('--log', action='store_false', help='remove log')
     parser.add_argument('--lrtest', action='store_true', help='perform learning rate test')
     parser.add_argument('--mpt', action='store_true', help='enable mixed precision training')
     parser.add_argument('--super', action='store_true', help='enable super convergence')
@@ -61,7 +63,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     outpath = os.path.dirname(args.experconfig)
-    log = Logger("{}/log.txt".format(outpath), args.resume)
+    if args.log:
+        log = Logger("{}/log.txt".format(outpath), args.resume)
     print("Python", sys.version)
     print("PyTorch", torch.__version__)
     print(" ".join(sys.argv))

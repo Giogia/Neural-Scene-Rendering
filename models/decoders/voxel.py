@@ -1,11 +1,5 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
-import numpy as np
 
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -64,7 +58,7 @@ class LinearTemplate(nn.Module):
 def get_template(template_type, **kwargs):
     if template_type == "conv":
         return ConvTemplate(**kwargs)
-    elif template_type == "affinemix":
+    elif template_type == "affine_mix":
         return LinearTemplate(**kwargs)
     else:
         return None
@@ -156,7 +150,7 @@ class AffineMixWarp(nn.Module):
 def get_warp(warptype, **kwargs):
     if warptype == "conv":
         return ConvWarp(**kwargs)
-    elif warptype == "affinemix":
+    elif warptype == "affine_mix":
         return AffineMixWarp(**kwargs)
     else:
         return None
@@ -164,7 +158,7 @@ def get_warp(warptype, **kwargs):
 
 class Decoder(nn.Module):
     def __init__(self, template_type="conv", template_res=128,
-                 view_conditioned=False, global_warp=True, warp_type="affinemix",
+                 view_conditioned=False, global_warp=True, warp_type="affine_mix",
                  displacement_warp=False):
         super(Decoder, self).__init__()
 

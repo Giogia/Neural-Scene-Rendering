@@ -1,9 +1,10 @@
 import copy
 import os
-import torch
-from tqdm.autonotebook import tqdm
-from torch.optim.lr_scheduler import _LRScheduler
+
 import matplotlib.pyplot as plt
+import torch
+from torch.optim.lr_scheduler import _LRScheduler
+from tqdm.autonotebook import tqdm
 
 try:
     from apex import amp

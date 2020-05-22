@@ -74,7 +74,9 @@ venv
 *.pt
 
 # Experiments
-/experiments/Lincoln
+experiments/Lincoln
+experiments/dryice1
 
 # Debug file
 run.py
+Neural_volumes.ipynb

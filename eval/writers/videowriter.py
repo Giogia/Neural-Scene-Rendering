@@ -1,81 +1,74 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
+
 import multiprocessing
 import os
 import shutil
 import subprocess
 
-import numpy as np
-
 import matplotlib.cm as cm
-
+import numpy as np
 from PIL import Image
 
 
 def writeimage(x):
-    randid, itemnum, imgout = x
+    random_id, item_num, output_image = x
 
-    imgout = np.clip(np.clip(imgout / 255., 0., 255.) ** (1. / 1.8) * 255., 0., 255).astype(np.uint8)
+    output_image = np.clip(np.clip(output_image / 255., 0., 255.) ** (1. / 1.8) * 255., 0., 255).astype(np.uint8)
 
-    if imgout.shape[1] % 2 != 0:
-        imgout = imgout[:, :-1]
+    if output_image.shape[1] % 2 != 0:
+        output_image = output_image[:, :-1]
 
-    Image.fromarray(imgout).save("/tmp/{}/{:06}.jpg".format(randid, itemnum))
+    Image.fromarray(output_image).save("/tmp/{}/{:06}.jpg".format(random_id, item_num))
 
 
 class Writer():
-    def __init__(self, outpath, showtarget=False, showdiff=False, bgcolor=[0., 0., 0.], colcorrect=[1.35, 1.16, 1.5],
-                 nthreads=16):
+    def __init__(self, outpath, show_target=False, show_diff=False, background_color=None, color_correction=None, n_threads=16):
+
         self.outpath = outpath
-        self.showtarget = showtarget
-        self.showdiff = showdiff
-        self.bgcolor = np.array(bgcolor, dtype=np.float32)
-        self.colcorrect = np.array(colcorrect, dtype=np.float32)
+        self.show_target = show_target
+        self.show_diff = show_diff
+        self.background_color = np.array([0.5, 0.5, 0.5] if background_color is None else background_color, dtype=np.float32)
+        self.color_correction = np.array([1.35, 1.16, 1.5] if color_correction is None else color_correction, dtype=np.float32)
 
         # set up temporary output
-        self.randid = ''.join([str(x) for x in np.random.randint(0, 9, size=10)])
+        self.random_id = ''.join([str(x) for x in np.random.randint(0, 9, size=10)])
         try:
-            os.makedirs("/tmp/{}".format(self.randid))
+            os.makedirs("/tmp/{}".format(self.random_id))
         except OSError:
             pass
 
-        self.writepool = multiprocessing.Pool(nthreads)
-        self.nitems = 0
+        self.write_pool = multiprocessing.Pool(n_threads)
+        self.n_items = 0
 
-    def batch(self, itemnum, irgbrec, ialpharec=None, image=None, irgbsqerr=None, **kwargs):
-        irgbrec = irgbrec.data.to("cpu").numpy().transpose((0, 2, 3, 1))
-        if ialpharec is not None:
-            ialpharec = ialpharec.data.to("cpu").numpy()[:, 0, :, :, None]
+    def batch(self, item_num, i_rgb_rec, i_alpha_rec=None, image=None, i_rgb_sqerr=None, **kwargs):
+        i_rgb_rec = i_rgb_rec.data.to("cpu").numpy().transpose((0, 2, 3, 1))
+        if i_alpha_rec is not None:
+            i_alpha_rec = i_alpha_rec.data.to("cpu").numpy()[:, 0, :, :, None]
         else:
-            ialpharec = 1.0
+            i_alpha_rec = 1.0
 
         # color correction
-        imgout = irgbrec * self.colcorrect[None, None, None, :]
+        output_image = i_rgb_rec * self.color_correction[None, None, None, :]
 
         # composite background color
-        imgout = imgout + (1. - ialpharec) * self.bgcolor[None, None, None, :]
+        output_image = output_image + (1. - i_alpha_rec) * self.background_color[None, None, None, :]
 
         # concatenate ground truth image
-        if self.showtarget and image is not None:
+        if self.show_target and image is not None:
             image = image.data.to("cpu").numpy().transpose((0, 2, 3, 1))
-            image = image * self.colcorrect[None, None, None, :]
-            imgout = np.concatenate((imgout, image), axis=2)
+            image = image * self.color_correction[None, None, None, :]
+            output_image = np.concatenate((output_image, image), axis=2)
 
         # concatenate difference image
-        if self.showdiff and imagediff is not None:
-            irgbsqerr = np.mean(irgbsqerr.data.to("cpu").numpy(), axis=1)
-            irgbsqerr = (cm.magma(4. * irgbsqerr / 255.)[:, :, :, :3] * 255.)
-            imgout = np.concatenate((imgout, irgbsqerr), axis=2)
+        if self.show_diff and imagediff is not None:
+            i_rgb_sqerr = np.mean(i_rgb_sqerr.data.to("cpu").numpy(), axis=1)
+            i_rgb_sqerr = (cm.magma(4. * i_rgb_sqerr / 255.)[:, :, :, :3] * 255.)
+            output_image = np.concatenate((output_image, i_rgb_sqerr), axis=2)
 
-        self.writepool.map(writeimage,
-                           zip([self.randid for i in range(itemnum.size(0))],
-                               itemnum.data.to("cpu").numpy(),
-                               imgout))
-        self.nitems += itemnum.size(0)
+        self.write_pool.map(writeimage,
+                            zip([self.random_id for i in range(item_num.size(0))],
+                                item_num.data.to("cpu").numpy(),
+                                output_image))
+        self.n_items += item_num.size(0)
 
     def finalize(self):
         # make video file
@@ -84,8 +77,8 @@ class Writer():
             "-vframes {} "
             "-vcodec libx264 -crf 18 "
             "-pix_fmt yuv420p "
-            "{}".format(self.randid, self.nitems, self.outpath)
+            "{}".format(self.random_id, self.n_items, self.outpath)
         ).split()
         subprocess.call(command)
 
-        shutil.rmtree("/tmp/{}".format(self.randid))
+        shutil.rmtree("/tmp/{}".format(self.random_id))

@@ -1,16 +1,12 @@
-# Copyright (c) Facebook, Inc. and its affiliates.
-# All rights reserved.
-#
-# This source code is licensed under the license found in the
-# LICENSE file in the root directory of this source tree.
-#
-import numpy as np
-import torch.utils.data
+
 import os
 
+import numpy as np
+import torch.utils.data
+
+from . import parameters
 from .csv_utils import read_csv
 from .exr_utils import exr_to_image, exr_to_depth
-from . import parameters
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

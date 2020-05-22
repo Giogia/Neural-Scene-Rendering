@@ -89,7 +89,7 @@ class Autoencoder(nn.Module):
             valid = torch.prod(torch.gt(ray_pos, -1.0) * torch.lt(ray_pos, 1.0), dim=-1).byte()
             valid_f = valid.float()
 
-            sample_rgb, sample_alpha = self.volume_sampler(ray_pos[:, None, :, :, :], **decoder_output, viewtemplate=view_template)
+            sample_rgb, sample_alpha = self.volume_sampler(ray_pos[:, None, :, :, :], **decoder_output, view_template=view_template)
 
             with torch.no_grad():
                 step = self.dt * torch.exp(self.step_jitter * torch.randn_like(t))
@@ -121,19 +121,19 @@ class Autoencoder(nn.Module):
 
             ray_rgb = ray_rgb + (1. - ray_alpha) * background.clamp(min=0.)
 
-        if "irgbrec" in output_list:
-            result["irgbrec"] = ray_rgb
-        if "ialpharec" in output_list:
-            result["ialpharec"] = ray_alpha
+        if "i_rgb_rec" in output_list:
+            result["i_rgb_rec"] = ray_rgb
+        if "i_alpha_rec" in output_list:
+            result["i_alpha_rec"] = ray_alpha
 
         # opacity prior
-        if "alphapr" in loss_list:
-            alphaprior = torch.mean(
+        if "alpha_prior" in loss_list:
+            alpha_prior = torch.mean(
                 torch.log(0.1 + ray_alpha.view(ray_alpha.size(0), -1)) +
                 torch.log(0.1 + 1. - ray_alpha.view(ray_alpha.size(0), -1)) - -2.20727, dim=-1)
-            result["losses"]["alphapr"] = alphaprior
+            result["losses"]["alpha_prior"] = alpha_prior
 
-        # irgb loss
+        # i_rgb loss
         if image is not None:
             if pixel_coords.size()[1:3] != image.size()[2:4]:
                 image = F.grid_sample(image, sample_coords, align_corners=True)
@@ -148,15 +148,15 @@ class Autoencoder(nn.Module):
             else:
                 weight = torch.ones_like(image) * valid_input[:, None, None, None]
 
-            irgbsqerr = weight * (image - ray_rgb) ** 2
+            i_rgb_sqerr = weight * (image - ray_rgb) ** 2
 
-            if "irgbsqerr" in output_list:
-                result["irgbsqerr"] = irgbsqerr
+            if "i_rgb_sqerr" in output_list:
+                result["i_rgb_sqerr"] = i_rgb_sqerr
 
-            if "irgbmse" in loss_list:
-                irgbmse = torch.sum(irgbsqerr.view(irgbsqerr.size(0), -1), dim=-1)
-                irgbmse_weight = torch.sum(weight.view(weight.size(0), -1), dim=-1)
+            if "i_rgb_mse" in loss_list:
+                i_rgb_mse = torch.sum(i_rgb_sqerr.view(i_rgb_sqerr.size(0), -1), dim=-1)
+                i_rgb_mse_weight = torch.sum(weight.view(weight.size(0), -1), dim=-1)
 
-                result["losses"]["irgbmse"] = (irgbmse, irgbmse_weight)
+                result["losses"]["i_rgb_mse"] = (i_rgb_mse, i_rgb_mse_weight)
 
         return result
