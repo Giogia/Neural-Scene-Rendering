@@ -1,3 +1,4 @@
+
 import os
 
 import data.blender as data_model
@@ -72,26 +73,6 @@ class Train:
                         last_epoch=iter_num - 1)
 
 
-class ProgressWriter:
-    def batch(self, iter_num, **kwargs):
-        import numpy as np
-        from PIL import Image
-        rows = []
-        row = []
-        for i in range(kwargs["image"].size(0)):
-            row.append(
-                np.concatenate((
-                    kwargs["i_rgb_rec"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
-                    kwargs["image"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]), axis=1))
-            if len(row) == 2:
-                rows.append(np.concatenate(row, axis=1))
-                row = []
-        img_out = np.concatenate(rows, axis=0)
-        outpath = os.path.dirname(__file__)
-        Image.fromarray(np.clip(img_out, 0, 255).astype(np.uint8)).save(
-            os.path.join(outpath, "prog_{:06}.jpg".format(iter_num)))
-
-
 class Progress:
     """Write out diagnostic images during training."""
     batch_size = 8
@@ -100,7 +81,9 @@ class Progress:
 
     def get_dataset(self): return get_dataset(frame_list=[parameters.END_FRAME])
 
-    def get_writer(self): return ProgressWriter()
+    def get_writer(self):
+        from eval.writers.progress_writer import ProgressWriter
+        return ProgressWriter()
 
 
 class Render:
@@ -130,8 +113,8 @@ class Render:
             return dataset
 
     def get_writer(self):
-        import eval.writers.videowriter as writer_lib
-        return writer_lib.Writer(
+        from eval.writers.video_writer import Writer
+        return Writer(
             os.path.join(os.path.dirname(__file__),
                          "render_{}{}.mp4".format(
                              "rotate" if self.cam is None else self.cam,
