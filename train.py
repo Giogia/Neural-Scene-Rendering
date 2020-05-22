@@ -184,7 +184,6 @@ if __name__ == "__main__":
                     test_output = ae([], **{k: x.to(device) for k, x in test_batch.items()},
                                      **progress.get_ae_args())
 
-                b = data["camera_position"].size(0)
                 writer.batch(iter_num, **test_batch, **test_output)
 
             # update parameters
