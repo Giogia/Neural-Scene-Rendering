@@ -109,7 +109,7 @@ class Render:
 
     e.g., python render.py {configpath} Render --maxframes 128"""
 
-    def __init__(self, cam=None, show_target=False, view_template=True):
+    def __init__(self, cam=None, show_target=True, view_template=False):
         self.cam = cam
         self.show_target = show_target
         self.view_template = view_template
