@@ -118,7 +118,7 @@ class Render:
         return get_autoencoder(dataset)
 
     def get_ae_args(self):
-        return dict(output_list=["i_rgb_rec"], view_template=self.view_template)
+        return dict(output_list=["i_rgb_rec", "i_alpha_rec"], view_template=self.view_template)
 
     def get_dataset(self):
         import data.utils

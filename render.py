@@ -76,19 +76,19 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         for data in dataloader:
-            b = next(iter(data.values())).size(0)
+            batch_size = next(iter(data.values())).size(0)
 
             # forward
             output = ae([], **{k: x.to(device) for k, x in data.items()}, **profile.get_ae_args())
 
-            writer.batch(item_num + torch.arange(b), **data, **output)
+            writer.batch(item_num + torch.arange(batch_size), **data, **output)
 
             end_time = time.time()
             ips = 1. / (end_time - start_time)
             print("{:4} / {:4} ({:.4f} iter/sec)".format(item_num, len(dataset), ips), end="\n")
             start_time = time.time()
 
-            item_num += b
+            item_num += batch_size
 
     # cleanup
     writer.finalize()

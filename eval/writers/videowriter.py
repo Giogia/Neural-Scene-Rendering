@@ -26,7 +26,7 @@ class Writer():
         self.outpath = outpath
         self.show_target = show_target
         self.show_diff = show_diff
-        self.background_color = np.array([1.0, 1.0, 1.0] if background_color is None else background_color, dtype=np.float32)
+        self.background_color = np.array([0.5, 0.5, 0.5] if background_color is None else background_color, dtype=np.float32)
         self.color_correction = np.array([1.35, 1.16, 1.5] if color_correction is None else color_correction, dtype=np.float32)
 
         # set up temporary output
@@ -40,11 +40,9 @@ class Writer():
         self.n_items = 0
 
     def batch(self, item_num, i_rgb_rec, i_alpha_rec=None, image=None, i_rgb_sqerr=None, **kwargs):
+
         i_rgb_rec = i_rgb_rec.data.to("cpu").numpy().transpose((0, 2, 3, 1))
-        if i_alpha_rec is not None:
-            i_alpha_rec = i_alpha_rec.data.to("cpu").numpy()[:, 0, :, :, None]
-        else:
-            i_alpha_rec = 1.0
+        i_alpha_rec = i_alpha_rec.data.to("cpu").numpy()[:, 0, :, :, None] if i_alpha_rec is not None else 1.0
 
         # color correction
         output_image = i_rgb_rec * self.color_correction[None, None, None, :]
