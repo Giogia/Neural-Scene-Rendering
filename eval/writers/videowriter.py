@@ -26,7 +26,7 @@ class Writer():
         self.outpath = outpath
         self.show_target = show_target
         self.show_diff = show_diff
-        self.background_color = np.array([0.5, 0.5, 0.5] if background_color is None else background_color, dtype=np.float32)
+        self.background_color = np.array([1.0, 1.0, 1.0] if background_color is None else background_color, dtype=np.float32)
         self.color_correction = np.array([1.35, 1.16, 1.5] if color_correction is None else color_correction, dtype=np.float32)
 
         # set up temporary output
