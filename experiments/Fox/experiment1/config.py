@@ -1,14 +1,14 @@
 
 import os
 
-import data.blender as data_model
+from data.blender import Dataset
 import data.parameters as parameters
 
 
 def get_dataset(camera_filter=lambda x: True, frame_list=None, subsample_type=None):
     if frame_list is None:
         frame_list = [i for i in range(parameters.START_FRAME, parameters.END_FRAME)]
-    return data_model.Dataset(
+    return Dataset(
         camera_filter=camera_filter,
         camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
         frame_list=frame_list,
@@ -91,7 +91,7 @@ class Render:
 
     e.g., python render.py {configpath} Render --maxframes 128"""
 
-    def __init__(self, cam=None, show_target=False, view_template=False):
+    def __init__(self, cam='1', show_target=False, view_template=False):
         self.cam = cam
         self.show_target = show_target
         self.view_template = view_template

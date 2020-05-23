@@ -51,11 +51,11 @@ class Dataset(torch.utils.data.Dataset):
         self.subsample_size = subsample_size
 
         # compute camera positions
-        self.campos, self.cam_rot, self.focal, self.princ_pt = {}, {}, {}, {}
+        self.camera_position, self.camera_rotation, self.focal, self.princ_pt = {}, {}, {}, {}
         for cam in self.cameras:
-            self.campos[cam] = (-np.dot(cameras[cam]['extrinsic'][:3, :3].T, cameras[cam]['extrinsic'][:3, 3])).astype(
+            self.camera_position[cam] = (-np.dot(cameras[cam]['extrinsic'][:3, :3].T, cameras[cam]['extrinsic'][:3, 3])).astype(
                 np.float32)
-            self.cam_rot[cam] = (cameras[cam]['extrinsic'][:3, :3]).astype(np.float32)
+            self.camera_rotation[cam] = (cameras[cam]['extrinsic'][:3, :3]).astype(np.float32)
             self.focal[cam] = np.diag(cameras[cam]['intrinsic'][:2, :2]).astype(np.float32)
             self.princ_pt[cam] = cameras[cam]['intrinsic'][:2, 2].astype(np.float32)
 
@@ -80,8 +80,8 @@ class Dataset(torch.utils.data.Dataset):
 
     def get_krt(self):
         return {k: {
-            "pos": self.campos[k],
-            "rot": self.cam_rot[k],
+            "pos": self.camera_position[k],
+            "rot": self.camera_rotation[k],
             "focal": self.focal[k],
             "princpt": self.princ_pt[k],
             "size": np.array([960, 540])}
@@ -113,6 +113,7 @@ class Dataset(torch.utils.data.Dataset):
             images = []
             for i in range(n_input):
                 image_path = os.path.join(self.path, 'camera_' + str(self.fixed_cameras[i]), str(frame) + '.exr')
+                # sample image to half resolution
                 image = 255 * exr_to_image(image_path)[::2, ::2, :].transpose((2, 0, 1)).astype(np.float32)
                 if "depth" in self.key_filter:
                     depth = exr_to_depth(image_path, far_threshold=2 * parameters.DISTANCE)
@@ -135,9 +136,9 @@ class Dataset(torch.utils.data.Dataset):
         if cam is not None:
             if "camera" in self.key_filter:
                 # camera data
-                result["camera_rotation"] = np.dot(self.model_transformation[:3, :3].T, self.cam_rot[cam].T).T
+                result["camera_rotation"] = np.dot(self.model_transformation[:3, :3].T, self.camera_rotation[cam].T).T
                 result["camera_position"] = np.dot(self.model_transformation[:3, :3].T,
-                                                   self.campos[cam] - self.model_transformation[:3, 3])
+                                                   self.camera_position[cam] - self.model_transformation[:3, 3])
                 result["focal"] = self.focal[cam]
                 result["principal_point"] = self.princ_pt[cam]
                 result["camera_index"] = self.cameras.index(cam)
