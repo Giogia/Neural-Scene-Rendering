@@ -2,32 +2,29 @@
 import numpy as np
 
 import torch.utils.data
+from src.utils.exr import exr_to_image
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, length, period=128):
+    def __init__(self, length, background, period=128):
         self.length = length
         self.period = period
-        self.width, self.height = 480, 640
+        self.width, self.height = 960, 540
+        self.cameras = ['rotate']
 
-        self.focal = np.array([1000. * (self.width / 480.), 1000. * (self.width / 480.)], dtype=np.float32)
+        self.focal = np.array([1000. * (self.width / 960.), 1000. * (self.width / 960.)], dtype=np.float32)
         self.principal_point = np.array([self.width * 0.5, self.height * 0.5], dtype=np.float32)
+
+        image = 255 * exr_to_image(background).transpose((2, 0, 1)).astype(np.float32)
+        self.background = {'rotate': image}
+        self.size = {'rotate': np.array([self.width, self.height])}
 
     def __len__(self):
         return self.length
 
-    def get_cameras(self):
-        return ["rotate"]
+    def __getitem__(self, index):
 
-    def get_krt(self):
-        return {"rotate": {
-            "focal": self.focal,
-            "principal_point": self.principal_point,
-            "size": np.array([self.width, self.height])}}
-
-    def __getitem__(self, idx):
-
-        t = (np.cos(idx * 2. * np.pi / self.period) * 0.5 + 0.5)
+        t = (np.cos(index * 2. * np.pi / self.period) * 0.5 + 0.5)
         x = np.cos(t * 2 * np.pi)
         y = np.sin(t * 2 * np.pi)
         z = 0

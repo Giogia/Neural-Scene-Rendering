@@ -1,7 +1,6 @@
 import numpy as np
 from Imath import PixelType
 from OpenEXR import InputFile
-from PIL import Image
 
 
 def exr_to_image(path):
@@ -27,17 +26,3 @@ def exr_to_depth(path, far_threshold=np.inf):
     exr_depth = np.reshape(exr_depth, size)
 
     return exr_depth
-
-
-def encode_to_srgb(image_array):
-    a = 0.055
-    return np.where(image_array <= 0.0031308,
-                    image_array * 12.92,
-                    (1 + a) * pow(image_array, 1 / 2.4) - a)
-
-
-def exr_to_pil_image(path):
-    exr_array = exr_to_image(path)
-    srgb_array = encode_to_srgb(exr_array) * 255
-
-    return Image.fromarray(srgb_array.astype('uint8'), 'RGB')

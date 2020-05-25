@@ -9,15 +9,11 @@ class Autoencoder(nn.Module):
         super(Autoencoder, self).__init__()
 
         self.estimate_background = estimate_background
-        self.cameras = dataset.get_cameras()
+        self.cameras = dataset.cameras
 
         self.encoder = encoder
         self.decoder = decoder
         self.volume_sampler = volume_sampler
-
-        self.background = nn.ParameterDict({
-            k: nn.Parameter(torch.ones(3, v["size"][1], v["size"][0]), requires_grad=estimate_background)
-            for k, v in dataset.get_krt().items()})
 
         self.color_calibrator = color_calibrator
         self.dt = dt
@@ -26,8 +22,15 @@ class Autoencoder(nn.Module):
         self.image_mean = dataset.image_mean
         self.image_std = dataset.image_std
 
-        if dataset.known_background():
-            dataset.get_background(self.background)
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        self.background = nn.ParameterDict({
+            camera_name: nn.Parameter(torch.ones(3, size[1], size[0]), requires_grad=estimate_background)
+            for camera_name, size in dataset.size.items()})
+
+        if dataset.use_background:
+            for camera_name in self.cameras:
+                self.background[camera_name].data[:] = torch.from_numpy(dataset.background[camera_name]).to(device)
 
     # omit background from state_dict if it's not being estimated
     def state_dict(self, destination=None, prefix='', keep_vars=False):

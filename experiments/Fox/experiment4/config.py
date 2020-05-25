@@ -1,7 +1,7 @@
 
 import os
 
-import data.blender as data_model
+import data.datasets.blender as data_model
 import data.parameters as parameters
 
 
@@ -19,7 +19,7 @@ def get_dataset(camera_filter=lambda x: True, frame_list=None, subsample_type=No
         subsample_type=subsample_type,
         subsample_size=128,
         world_scale=parameters.SCALE,
-        path=os.path.join('experiments', 'Fox', 'data'))
+        path=os.path.join('experiments', 'Fox', 'src'))
 
 
 def get_autoencoder(dataset):
@@ -82,7 +82,7 @@ class Progress:
     def get_dataset(self): return get_dataset(frame_list=[parameters.END_FRAME])
 
     def get_writer(self):
-        from eval.writers.progress_writer import ProgressWriter
+        from data.writers.progress_writer import ProgressWriter
         return ProgressWriter()
 
 
@@ -104,7 +104,7 @@ class Render:
 
     def get_dataset(self):
         import data.utils
-        import eval.cameras.rotate as cameralib
+        import data.datasets.rotate as cameralib
         dataset = get_dataset(camera_filter=lambda x: x == self.cam)
         if self.cam is None:
             cam_dataset = cameralib.Dataset(len(dataset))
@@ -113,7 +113,7 @@ class Render:
             return dataset
 
     def get_writer(self):
-        from eval.writers.video_writer import Writer
+        from data.writers.video_writer import Writer
         return Writer(
             os.path.join(os.path.dirname(__file__),
                          "render_{}{}.mp4".format(
