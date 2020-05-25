@@ -1,25 +1,25 @@
 
 import os
 
-import data.datasets.blender as data_model
-import data.parameters as parameters
+import src.parameters as parameters
+from src.datasets.join import JoinDataset
 
 
-def get_dataset(camera_filter=lambda x: True, frame_list=None, subsample_type=None):
-    if frame_list is None:
-        frame_list = [i for i in range(parameters.START_FRAME, parameters.END_FRAME)]
-    return data_model.Dataset(
-        camera_filter=camera_filter,
-        camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
+def get_dataset(camera_list=None, frame_list=None, subsample_type=None):
+    from src.datasets.blender import Dataset
+    return Dataset(
+        camera_list=camera_list,
         frame_list=frame_list,
-        key_filter=["background", "fixed_cam_image", "camera", "image", "depth", "pixel_coords"],
+        background=True,
+        depth=False,
         fixed_cameras=["1", "3", "7"],
         image_mean=50.,
         image_std=25.,
+        image_size=[960, 540],
         subsample_type=subsample_type,
         subsample_size=128,
         world_scale=parameters.SCALE,
-        path=os.path.join('experiments', 'Fox', 'src'))
+        path=os.path.join('experiments', 'Fox', 'data'))
 
 
 def get_autoencoder(dataset):
@@ -30,10 +30,10 @@ def get_autoencoder(dataset):
     import models.colorcals.color_calibrator as color_cal_lib
     return ae_model.Autoencoder(
         dataset,
-        encoder_lib.Encoder(n_inputs=3, n_channels=4),
+        encoder_lib.Encoder(n_inputs=3, n_channels=3),
         decoder_lib.Decoder(global_warp=False),
         vol_sampler_lib.VolSampler(),
-        color_cal_lib.Colorcal(dataset.get_cameras()),
+        color_cal_lib.Colorcal(dataset.cameras),
         4. / 256)
 
 
@@ -46,7 +46,10 @@ class Train:
 
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
 
-    def get_dataset(self): return get_dataset(subsample_type="random2")
+    def get_dataset(self):
+        return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
+                           frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
+                           subsample_type="random2")
 
     def get_optimizer(self, ae):
         import itertools
@@ -79,19 +82,18 @@ class Progress:
 
     def get_ae_args(self): return dict(output_list=["i_rgb_rec"])
 
-    def get_dataset(self): return get_dataset(frame_list=[parameters.END_FRAME])
+    def get_dataset(self): return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
+                                              frame_list=[parameters.END_FRAME])
 
     def get_writer(self):
-        from data.writers.progress_writer import ProgressWriter
+        from src.writers.progress import ProgressWriter
         return ProgressWriter()
 
 
 class Render:
-    """Render model with training camera or from novel viewpoints.
+    """Render model with training camera or from novel viewpoints."""
 
-    e.g., python render.py {configpath} Render --maxframes 128"""
-
-    def __init__(self, cam=None, show_target=False, view_template=False):
+    def __init__(self, cam=1, show_target=False, view_template=False):
         self.cam = cam
         self.show_target = show_target
         self.view_template = view_template
@@ -103,17 +105,22 @@ class Render:
         return dict(output_list=["i_rgb_rec", "i_alpha_rec"], view_template=self.view_template)
 
     def get_dataset(self):
-        import data.utils
-        import data.datasets.rotate as cameralib
-        dataset = get_dataset(camera_filter=lambda x: x == self.cam)
+        dataset = get_dataset(camera_list=[] if self.cam is None else [self.cam],
+                              frame_list=[i for i in range(parameters.START_FRAME+50, parameters.START_FRAME+54)])
         if self.cam is None:
-            cam_dataset = cameralib.Dataset(len(dataset))
-            return data.utils.JoinDataset(cam_dataset, dataset)
+            # TODO debug background
+            path = os.path.join('experiments', 'Fox', 'data')
+            background_path = os.path.join(path, 'camera_1', 'background.exr')
+
+            from src.datasets.rotate import Dataset
+            cam_dataset = Dataset(length=len(dataset), background=background_path)
+
+            return JoinDataset(cam_dataset, dataset)
         else:
             return dataset
 
     def get_writer(self):
-        from data.writers.video_writer import Writer
+        from src.writers.video import Writer
         return Writer(
             os.path.join(os.path.dirname(__file__),
                          "render_{}{}.mp4".format(
