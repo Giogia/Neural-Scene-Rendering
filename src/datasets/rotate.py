@@ -2,7 +2,7 @@
 import numpy as np
 
 import torch.utils.data
-from src.utils.exr import exr_to_image
+from src.parameters import BACKGROUND_COLOR
 
 
 class Dataset(torch.utils.data.Dataset):
@@ -14,7 +14,9 @@ class Dataset(torch.utils.data.Dataset):
 
         self.focal = np.array([1000. * (self.width / 960.), 1000. * (self.width / 960.)], dtype=np.float32)
         self.principal_point = np.array([self.width * 0.5, self.height * 0.5], dtype=np.float32)
-        self.size = {'rotate': np.array([self.width, self.height])}
+        self.size = {self.cameras[0]: np.array([self.width, self.height])}
+        self.background = {self.cameras[0]: np.stack(color * np.ones((self.height, self.width), dtype=np.float32)
+                                                     for color in BACKGROUND_COLOR)}
 
     def __len__(self):
         return self.length

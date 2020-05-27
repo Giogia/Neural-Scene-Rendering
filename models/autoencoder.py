@@ -24,9 +24,8 @@ class Autoencoder(nn.Module):
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-        # todo debug
         self.background = nn.ParameterDict({
-            camera_name: nn.Parameter(0.5 * torch.ones(3, size[1], size[0]), requires_grad=estimate_background)
+            camera_name: nn.Parameter(torch.ones(3, size[1], size[0]), requires_grad=estimate_background)
             for camera_name, size in dataset.size.items()})
 
         if dataset.use_background:
@@ -125,14 +124,9 @@ class Autoencoder(nn.Module):
 
             ray_rgb = ray_rgb + (1. - ray_alpha) * background.clamp(min=0.)
 
-        # todo debug
         if camera_index is None:
-
-            background = self.background['rotate']
+            background = torch.stack([self.background[self.cameras[0]] for i in range(4)], dim=0)
             ray_rgb = ray_rgb + (1. - ray_alpha) * background.clamp(min=0.)
-            from src.utils.visualization import show_array
-            show_array(ray_alpha.data.to("cpu").numpy()[0, 0, :, :])
-            show_array(background.data.to("cpu").numpy().transpose((1, 2, 0)))
 
         if "i_rgb_rec" in output_list:
             result["i_rgb_rec"] = ray_rgb
