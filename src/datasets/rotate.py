@@ -15,8 +15,8 @@ class Dataset(torch.utils.data.Dataset):
         self.focal = np.array([1000. * (self.width / 960.), 1000. * (self.width / 960.)], dtype=np.float32)
         self.principal_point = np.array([self.width * 0.5, self.height * 0.5], dtype=np.float32)
         self.size = {self.cameras[0]: np.array([self.width, self.height])}
-        self.background = {self.cameras[0]: np.stack(color * np.ones((self.height, self.width), dtype=np.float32)
-                                                     for color in BACKGROUND_COLOR)}
+        self.background = {self.cameras[0]: np.stack([color * np.ones((self.height, self.width), dtype=np.float32)
+                                                     for color in BACKGROUND_COLOR])}
 
     def __len__(self):
         return self.length
