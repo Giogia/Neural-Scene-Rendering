@@ -125,7 +125,7 @@ class Autoencoder(nn.Module):
             ray_rgb = ray_rgb + (1. - ray_alpha) * background.clamp(min=0.)
 
         if camera_index is None:
-            background = torch.stack([self.background[self.cameras[0]] for i in range(camera_position.size[0])], dim=0)
+            background = torch.stack([self.background[self.cameras[0]] for i in range(4)], dim=0)
             ray_rgb = ray_rgb + (1. - ray_alpha) * background.clamp(min=0.)
 
         if "i_rgb_rec" in output_list:
