@@ -108,7 +108,7 @@ class Render:
 
     def get_dataset(self):
         dataset = get_dataset(camera_list=[] if self.cam is None else [self.cam],
-                              frame_list=[i for i in range(parameters.START_FRAME+50, parameters.START_FRAME+54)],
+                              frame_list=[i for i in range(parameters.START_FRAME+50, parameters.END_FRAME)],
                               background=True)
         if self.cam is None:
 
