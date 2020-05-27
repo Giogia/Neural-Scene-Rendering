@@ -6,7 +6,7 @@ from src.utils.exr import exr_to_image
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, length, background, period=128):
+    def __init__(self, length, period=128):
         self.length = length
         self.period = period
         self.width, self.height = 960, 540
@@ -14,9 +14,6 @@ class Dataset(torch.utils.data.Dataset):
 
         self.focal = np.array([1000. * (self.width / 960.), 1000. * (self.width / 960.)], dtype=np.float32)
         self.principal_point = np.array([self.width * 0.5, self.height * 0.5], dtype=np.float32)
-
-        image = 255 * exr_to_image(background).transpose((2, 0, 1)).astype(np.float32)
-        self.background = {'rotate': image}
         self.size = {'rotate': np.array([self.width, self.height])}
 
     def __len__(self):
