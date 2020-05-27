@@ -5,13 +5,13 @@ import src.parameters as parameters
 from src.datasets.join import JoinDataset
 
 
-def get_dataset(camera_list=None, frame_list=None, subsample_type=None):
+def get_dataset(camera_list=None, frame_list=None, background=False, depth=False, subsample_type=None):
     from src.datasets.blender import Dataset
     return Dataset(
         camera_list=camera_list,
         frame_list=frame_list,
-        background=True,
-        depth=False,
+        background=background,
+        depth=depth,
         fixed_cameras=["1", "3", "7"],
         image_mean=50.,
         image_std=25.,
@@ -49,6 +49,7 @@ class Train:
     def get_dataset(self):
         return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
                            frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
+                           background=True,
                            subsample_type="random2")
 
     def get_optimizer(self, ae):
@@ -83,7 +84,8 @@ class Progress:
     def get_ae_args(self): return dict(output_list=["i_rgb_rec"])
 
     def get_dataset(self): return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
-                                              frame_list=[parameters.END_FRAME])
+                                              frame_list=[parameters.END_FRAME],
+                                              background=True)
 
     def get_writer(self):
         from src.writers.progress import ProgressWriter
@@ -93,7 +95,7 @@ class Progress:
 class Render:
     """Render model with training camera or from novel viewpoints."""
 
-    def __init__(self, cam=1, show_target=False, view_template=False):
+    def __init__(self, cam=None, show_target=False, view_template=False):
         self.cam = cam
         self.show_target = show_target
         self.view_template = view_template
@@ -106,14 +108,12 @@ class Render:
 
     def get_dataset(self):
         dataset = get_dataset(camera_list=[] if self.cam is None else [self.cam],
-                              frame_list=[i for i in range(parameters.START_FRAME+50, parameters.START_FRAME+54)])
+                              frame_list=[i for i in range(parameters.START_FRAME+50, parameters.START_FRAME+54)],
+                              background=True)
         if self.cam is None:
-            # TODO debug background
-            path = os.path.join('experiments', 'Fox', 'data')
-            background_path = os.path.join(path, 'camera_1', 'background.exr')
 
             from src.datasets.rotate import Dataset
-            cam_dataset = Dataset(length=len(dataset), background=background_path)
+            cam_dataset = Dataset(length=len(dataset))
 
             return JoinDataset(cam_dataset, dataset)
         else:
