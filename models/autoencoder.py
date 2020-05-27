@@ -132,7 +132,7 @@ class Autoencoder(nn.Module):
             ray_rgb = ray_rgb + (1. - ray_alpha) * background.clamp(min=0.)
             from src.utils.visualization import show_array
             show_array(ray_alpha.data.to("cpu").numpy()[0, 0, :, :])
-            show_array(background.data.to("cpu").numpy()[0, 0, :, :])
+            show_array(background.data.to("cpu").numpy().transpose((1, 2, 0)))
 
         if "i_rgb_rec" in output_list:
             result["i_rgb_rec"] = ray_rgb
