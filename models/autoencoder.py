@@ -42,7 +42,7 @@ class Autoencoder(nn.Module):
 
     def forward(self, loss_list, camera_rotation, camera_position, focal, principal_point, pixel_coords, valid_input,
                 fixed_cam_image=None, encoding=None, keypoints=None, camera_index=None,
-                image=None, image_valid=None, view_template=False,
+                image=None, depth=None, image_valid=None, view_template=False,
                 output_list=[]):
 
         result = {"losses": {}}
@@ -85,6 +85,7 @@ class Autoencoder(nn.Module):
         ray_pos = camera_position[:, None, None, :] + ray_direction * t[..., None]  # NHWC
         ray_rgb = torch.zeros_like(ray_pos.permute(0, 3, 1, 2))  # NCHW
         ray_alpha = torch.zeros_like(ray_rgb[:, 0:1, :, :])  # NCHW
+        ray_length = torch.zeros_like(ray_rgb[:, 0:1, :, :])  # NCHW
 
         # raymarch
         done = torch.zeros_like(t).bool()
@@ -103,9 +104,14 @@ class Autoencoder(nn.Module):
 
             ray_rgb = ray_rgb + sample_rgb[:, :, 0, :, :] * contrib
             ray_alpha = ray_alpha + contrib
-
+            ray_length = ray_length + step.unsqueeze(1) * (contrib > 0)
             ray_pos = ray_pos + ray_direction * step[:, :, :, None]
+
             t = t + step
+
+        from src.utils.visualization import show_array
+        show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
+        show_array(ray_rgb.data.to("cpu").numpy()[0, :, :, :].transpose(1, 2, 0))
 
         if image is not None:
             image_size = torch.tensor(image.size()[3:1:-1], dtype=torch.float32, device=pixel_coords.device)
@@ -165,5 +171,21 @@ class Autoencoder(nn.Module):
                 i_rgb_mse_weight = torch.sum(weight.view(weight.size(0), -1), dim=-1)
 
                 result["losses"]["i_rgb_mse"] = (i_rgb_mse, i_rgb_mse_weight)
+
+            if depth is not None:
+
+                if pixel_coords.size()[1:3] != depth.size()[2:4]:
+                    depth = F.grid_sample(depth, sample_coords, align_corners=False)
+
+                i_depth_sqerr = weight * (depth - ray_length) ** 2
+
+                if "i_depth_sqerr" in output_list:
+                    result["i_depth_sqerr"] = i_depth_sqerr
+
+                if "i_depth_mse" in loss_list:
+                    i_depth_mse = torch.sum(i_depth_sqerr.view(i_depth_sqerr.size(0), -1), dim=-1)
+                    i_depth_mse_weight = torch.sum(weight.view(weight.size(0), -1), dim=-1)
+
+                    result["losses"]["i_depth_mse"] = (i_depth_mse, i_depth_mse_weight)
 
         return result

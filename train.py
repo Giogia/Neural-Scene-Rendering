@@ -80,8 +80,8 @@ if __name__ == "__main__":
     # load checkpoint
     if args.resume:
         start_time = time.time()
-        checkpoint = torch.load("{}/checkpoint.pt".format(outpath))
-        iter_num = torch.load("{}/checkpoint.pt".format(outpath))['iteration']
+        checkpoint = torch.load("{}/checkpoint.pt".format(outpath), map_location=torch.device(device))
+        iter_num = checkpoint['iteration']
         print("Checkpoint Loaded ({:.2f} s): ".format(time.time() - start_time) +
               "starting at iteration {}".format(iter_num))
     else:
