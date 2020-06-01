@@ -109,10 +109,6 @@ class Autoencoder(nn.Module):
 
             t = t + step
 
-        from src.utils.visualization import show_array
-        show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
-        show_array(ray_rgb.data.to("cpu").numpy()[0, :, :, :].transpose(1, 2, 0))
-
         if image is not None:
             image_size = torch.tensor(image.size()[3:1:-1], dtype=torch.float32, device=pixel_coords.device)
             sample_coords = pixel_coords * 2. / (image_size[None, None, None, :] - 1.) - 1.

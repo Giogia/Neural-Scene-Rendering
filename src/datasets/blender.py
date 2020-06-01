@@ -103,7 +103,7 @@ class Dataset(torch.utils.data.Dataset):
             image = 255 * exr_to_image(image_path).transpose((2, 0, 1)).astype(np.float32)
             depth = exr_to_depth(image_path, far_threshold=2 * parameters.DISTANCE)
             depth = np.expand_dims(depth, axis=-1).transpose((2, 0, 1)).astype(np.float32)
-            depth = 255 * depth / np.max(depth)
+            depth = 2 * depth / np.max(depth)
             height, width = image.shape[1:3]
             valid = np.float32(1.0) if np.sum(image) != 0 else np.float32(0.)
             result["image"] = image
