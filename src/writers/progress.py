@@ -4,7 +4,8 @@ import numpy as np
 from PIL import Image
 
 
-def concatenate(image, rec):
+def concatenate(rec, image):
+
     rows = []
     row = []
 
@@ -12,13 +13,14 @@ def concatenate(image, rec):
         row.append(
             np.concatenate((
                 rec[i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
-                image[i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]), axis=1))
+                image[i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]),
+                axis=1))
+
         if len(row) == 2:
             rows.append(np.concatenate(row, axis=1))
             row = []
 
-    out_image = np.concatenate(rows, axis=0)
-    return Image.fromarray(np.clip(out_image, 0, 255).astype(np.uint8))
+    return np.concatenate(rows, axis=0)
 
 
 class ProgressWriter:
@@ -27,10 +29,12 @@ class ProgressWriter:
 
     def batch(self, iter_num, **kwargs):
 
-        image = concatenate(kwargs["image"], kwargs["i_rgb_rec"])
+        image = concatenate(kwargs['i_rgb_rec'], kwargs['image'])
+        image = Image.fromarray(np.clip(image, 0, 255).astype(np.uint8))
         image.save(os.path.join(self.outpath, "prog_{:06}.jpg".format(iter_num)))
 
-        depth = concatenate(kwargs["depth"], kwargs["i_depth_rec"])
+        depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
+        depth = Image.fromarray((255 * depth[:, :, 0] / np.max(depth)).astype(np.uint8))
         depth.save(os.path.join(self.outpath, "prog_{:06}_depth.jpg".format(iter_num)))
 
 
