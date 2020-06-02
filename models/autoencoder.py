@@ -109,6 +109,9 @@ class Autoencoder(nn.Module):
 
             t = t + step
 
+        ray_length *= ray_alpha
+        # todo ray_length /= torch.max(ray_length)
+
         if image is not None:
             image_size = torch.tensor(image.size()[3:1:-1], dtype=torch.float32, device=pixel_coords.device)
             sample_coords = pixel_coords * 2. / (image_size[None, None, None, :] - 1.) - 1.
@@ -175,7 +178,7 @@ class Autoencoder(nn.Module):
                 if pixel_coords.size()[1:3] != depth.size()[2:4]:
                     depth = F.grid_sample(depth, sample_coords, align_corners=False)
 
-                i_depth_sqerr = weight * (depth - ray_length * ray_alpha) ** 2
+                i_depth_sqerr = weight * (depth - ray_length) ** 2
 
                 if "i_depth_sqerr" in output_list:
                     result["i_depth_sqerr"] = i_depth_sqerr
