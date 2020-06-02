@@ -87,7 +87,7 @@ class Autoencoder(nn.Module):
         ray_alpha = torch.zeros_like(ray_rgb[:, 0:1, :, :])  # NCHW
         ray_length = torch.zeros_like(ray_rgb[:, 0:1, :, :])  # NCHW
 
-        # raymarch
+        # ray marching
         done = torch.zeros_like(t).bool()
         while not done.all():
             valid = torch.prod(torch.gt(ray_pos, -1.0) * torch.lt(ray_pos, 1.0), dim=-1).byte()
@@ -104,13 +104,14 @@ class Autoencoder(nn.Module):
 
             ray_rgb = ray_rgb + sample_rgb[:, :, 0, :, :] * contrib
             ray_alpha = ray_alpha + contrib
-            ray_length = ray_length + step.unsqueeze(1) * (contrib > 0) * (ray_alpha > 0)
+            ray_length = (ray_length + step.unsqueeze(1) * (contrib > 0))
             ray_pos = ray_pos + ray_direction * step[:, :, :, None]
 
             t = t + step
 
         from src.utils.visualization import show_array
-        # show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
+        ray_length = ray_length * ray_alpha
+        show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
         show_array(ray_alpha.data.to("cpu").numpy()[0, 0, :, :])
         show_array(depth[0, 0, :, :])
 
@@ -178,7 +179,7 @@ class Autoencoder(nn.Module):
                 if pixel_coords.size()[1:3] != depth.size()[2:4]:
                     depth = F.grid_sample(depth, sample_coords, align_corners=False)
 
-                i_depth_sqerr = weight * (depth - ray_length) ** 2
+                i_depth_sqerr = weight * (depth - ray_length * ray_alpha) ** 2
 
                 if "i_depth_sqerr" in output_list:
                     result["i_depth_sqerr"] = i_depth_sqerr
