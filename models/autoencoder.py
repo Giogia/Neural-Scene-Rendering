@@ -104,17 +104,14 @@ class Autoencoder(nn.Module):
 
             ray_rgb = ray_rgb + sample_rgb[:, :, 0, :, :] * contrib
             ray_alpha = ray_alpha + contrib
-            ray_length = ray_length + step.unsqueeze(1) * (contrib > 0)
+            ray_length = ray_length + step.unsqueeze(1) * (contrib > 0) * (ray_alpha > 0)
             ray_pos = ray_pos + ray_direction * step[:, :, :, None]
 
             t = t + step
 
         from src.utils.visualization import show_array
-        print('length')
-        # show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
-        print('alpha')
+        show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
         show_array(ray_alpha.data.to("cpu").numpy()[0, 0, :, :])
-        print('depth')
         show_array(depth.data.to("cpu").numpy()[0, 0, :, :])
 
         if image is not None:
