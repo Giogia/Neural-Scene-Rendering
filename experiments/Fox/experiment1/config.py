@@ -91,7 +91,7 @@ class Progress:
 
     def get_writer(self):
         from src.writers.progress import ProgressWriter
-        return ProgressWriter()
+        return ProgressWriter(outpath=os.path.dirname(__file__))
 
 
 class Render:
