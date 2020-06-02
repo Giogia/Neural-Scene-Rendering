@@ -134,6 +134,8 @@ class Autoencoder(nn.Module):
             result["i_rgb_rec"] = ray_rgb
         if "i_alpha_rec" in output_list:
             result["i_alpha_rec"] = ray_alpha
+        if "i_depth_rec" in output_list:
+            result["i_depth_rec"] = ray_length * ray_alpha
 
         # opacity prior
         if "alpha_prior" in loss_list:

@@ -82,7 +82,7 @@ class Progress:
     """Write out diagnostic images during training."""
     batch_size = 8
 
-    def get_ae_args(self): return dict(output_list=["i_rgb_rec"])
+    def get_ae_args(self): return dict(output_list=["i_rgb_rec", "i_depth_rec"])
 
     def get_dataset(self): return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
                                               frame_list=[parameters.END_FRAME],

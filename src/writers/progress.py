@@ -12,7 +12,9 @@ class ProgressWriter:
             row.append(
                 np.concatenate((
                     kwargs["i_rgb_rec"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
-                    kwargs["image"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]), axis=1))
+                    kwargs["image"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
+                    kwargs["i_depth_rec"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
+                    kwargs["depth"][i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]), axis=1))
             if len(row) == 2:
                 rows.append(np.concatenate(row, axis=1))
                 row = []
