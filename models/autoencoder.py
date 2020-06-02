@@ -42,7 +42,7 @@ class Autoencoder(nn.Module):
 
     def forward(self, loss_list, camera_rotation, camera_position, focal, principal_point, pixel_coords, valid_input,
                 fixed_cam_image=None, encoding=None, keypoints=None, camera_index=None,
-                image=None, depth=None, image_valid=None, view_template=False,
+                image=None, image_valid=None, depth=None, view_template=False,
                 output_list=[]):
 
         result = {"losses": {}}
@@ -108,6 +108,9 @@ class Autoencoder(nn.Module):
             ray_pos = ray_pos + ray_direction * step[:, :, :, None]
 
             t = t + step
+
+        from src.utils.visualization import show_array
+        show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
 
         if image is not None:
             image_size = torch.tensor(image.size()[3:1:-1], dtype=torch.float32, device=pixel_coords.device)
