@@ -86,6 +86,7 @@ class Progress:
 
     def get_dataset(self): return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
                                               frame_list=[parameters.END_FRAME],
+                                              depth=True,
                                               background=True)
 
     def get_writer(self):
