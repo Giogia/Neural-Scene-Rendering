@@ -110,7 +110,11 @@ class Autoencoder(nn.Module):
             t = t + step
 
         from src.utils.visualization import show_array
+        print('length')
         show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
+        print('alpha')
+        show_array(ray_alpha.data.to("cpu").numpy()[0, 0, :, :])
+        print('depth')
         show_array(depth.data.to("cpu").numpy()[0, 0, :, :])
 
         if image is not None:
