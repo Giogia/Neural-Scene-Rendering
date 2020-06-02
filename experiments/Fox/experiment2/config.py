@@ -30,7 +30,7 @@ def get_autoencoder(dataset):
     import models.colorcals.color_calibrator as color_cal_lib
     return ae_model.Autoencoder(
         dataset,
-        encoder_lib.Encoder(n_inputs=3, n_channels=3),
+        encoder_lib.Encoder(n_inputs=3, n_channels=4),
         decoder_lib.Decoder(global_warp=False),
         vol_sampler_lib.VolSampler(),
         color_cal_lib.Colorcal(dataset.cameras),
@@ -86,12 +86,12 @@ class Progress:
 
     def get_dataset(self): return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
                                               frame_list=[parameters.END_FRAME],
-                                              background=True,
-                                              depth=True)
+                                              depth=True,
+                                              background=True)
 
     def get_writer(self):
         from src.writers.progress import ProgressWriter
-        return ProgressWriter()
+        return ProgressWriter(outpath=os.path.dirname(__file__))
 
 
 class Render:
