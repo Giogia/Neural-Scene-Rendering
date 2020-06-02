@@ -111,7 +111,7 @@ class Autoencoder(nn.Module):
 
         from src.utils.visualization import show_array
         print('length')
-        show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
+        # show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
         print('alpha')
         show_array(ray_alpha.data.to("cpu").numpy()[0, 0, :, :])
         print('depth')
