@@ -113,7 +113,7 @@ class Autoencoder(nn.Module):
         ray_length = ray_length * ray_alpha
         show_array(ray_length.data.to("cpu").numpy()[0, 0, :, :])
         show_array(ray_alpha.data.to("cpu").numpy()[0, 0, :, :])
-        show_array(depth[0, 0, :, :])
+        show_array(depth.data.to("cpu").numpy()[0, 0, :, :])
 
         if image is not None:
             image_size = torch.tensor(image.size()[3:1:-1], dtype=torch.float32, device=pixel_coords.device)
