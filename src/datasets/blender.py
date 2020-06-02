@@ -27,6 +27,7 @@ class Dataset(torch.utils.data.Dataset):
         self.image_mean = image_mean
         self.image_std = image_std
         self.image_size = image_size
+        self.world_scale = world_scale
         self.subsample_type = subsample_type
         self.subsample_size = subsample_size
         self.path = path
@@ -45,7 +46,7 @@ class Dataset(torch.utils.data.Dataset):
         # transformation that places the center of the object at the origin
         transformation = read_csv(os.path.join(self.path, "model.csv"))
         self.model_transformation = np.array(transformation, dtype=np.float32)[0:][0:-1]
-        self.model_transformation[:3, :3] *= world_scale
+        self.model_transformation[:3, :3] *= self.world_scale
 
         # load background images for each camera
         if self.use_background:
@@ -109,7 +110,7 @@ class Dataset(torch.utils.data.Dataset):
             # depth
             depth = exr_to_depth(image_path, far_threshold=2 * parameters.DISTANCE)
             depth = np.expand_dims(depth, axis=-1).transpose((2, 0, 1)).astype(np.float32)
-            depth = depth / np.max(depth)
+            depth *= self.world_scale
             result["depth"] = depth
 
             if self.subsample_type == "patch":
