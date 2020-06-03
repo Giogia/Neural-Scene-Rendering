@@ -30,8 +30,8 @@ def get_autoencoder(dataset):
     import models.colorcals.color_calibrator as color_cal_lib
     return ae_model.Autoencoder(
         dataset,
-        encoder_lib.Encoder(n_inputs=3, n_channels=3),
-        decoder_lib.Decoder(global_warp=False),
+        encoder_lib.Encoder(n_inputs=3, n_channels=4),
+        decoder_lib.Decoder(global_warp=False, template_res=128),
         vol_sampler_lib.VolSampler(),
         color_cal_lib.Colorcal(dataset.cameras),
         4. / 256)
@@ -41,7 +41,7 @@ def get_autoencoder(dataset):
 # A profile is instantiated by the training or evaluation scripts
 # and controls how the dataset and autoencoder is created
 class Train:
-    batch_size = 8
+    batch_size = 4
     max_iter = 10000
 
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
@@ -50,6 +50,7 @@ class Train:
         return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
                            frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                            background=True,
+                           depth=True,
                            subsample_type="random2")
 
     def get_optimizer(self, ae):
@@ -63,7 +64,7 @@ class Train:
         return torch.optim.AdamW(ae_params, lr=lr, betas=(0.9, 0.999))
 
     def get_loss_weights(self):
-        return {"i_rgb_mse": 1.0, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
+        return {"i_rgb_mse": 1.0, "i_depth_mse": 1.0, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
 
     def get_loss(self):
         import models.losses.aeloss as loss
@@ -81,10 +82,11 @@ class Progress:
     """Write out diagnostic images during training."""
     batch_size = 8
 
-    def get_ae_args(self): return dict(output_list=["i_rgb_rec"])
+    def get_ae_args(self): return dict(output_list=["i_rgb_rec", "i_depth_rec"])
 
     def get_dataset(self): return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
                                               frame_list=[parameters.END_FRAME],
+                                              depth=True,
                                               background=True)
 
     def get_writer(self):
@@ -108,8 +110,9 @@ class Render:
 
     def get_dataset(self):
         dataset = get_dataset(camera_list=[] if self.cam is None else [self.cam],
-                              frame_list=[i for i in range(parameters.START_FRAME+50, parameters.START_FRAME+54)],
-                              background=True)
+                              frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
+                              background=True,
+                              depth=True)
         if self.cam is None:
 
             from src.datasets.rotate import Dataset
