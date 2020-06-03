@@ -67,8 +67,6 @@ if __name__ == "__main__":
         log = Logger("{}/log.txt".format(outpath), args.resume)
     print("Python", sys.version)
     print("PyTorch", torch.__version__)
-    print(" ".join(sys.argv))
-    print("Output path:", outpath)
 
     # load config
     start_time = time.time()
@@ -147,7 +145,7 @@ if __name__ == "__main__":
 
     # train
     start_time = time.time()
-    eval_points = np.geomspace(1., profile.max_iter, 100).astype(np.int32)
+    eval_points = np.linspace(1., profile.max_iter, 100).astype(np.int32)
     prevloss = np.inf
 
     for epoch in range(1000):

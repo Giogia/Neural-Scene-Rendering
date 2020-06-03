@@ -35,8 +35,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     outpath = os.path.dirname(args.experconfig)
-    print(" ".join(sys.argv))
-    print("Output path:", outpath)
+    print("Python", sys.version)
+    print("PyTorch", torch.__version__)
 
     # load config
     start_time = time.time()
