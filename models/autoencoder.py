@@ -63,7 +63,7 @@ class Autoencoder(nn.Module):
         ray_direction = torch.sum(camera_rotation[:, None, None, :, :] * ray_direction[:, :, :, :, None], dim=-2)
         ray_direction = ray_direction / torch.sqrt(torch.sum(ray_direction ** 2, dim=-1, keepdim=True))
 
-        # compute raymarching starting points
+        # compute ray marching starting points
         with torch.no_grad():
             t1 = (-1.0 - camera_position[:, None, None, :]) / ray_direction
             t2 = (1.0 - camera_position[:, None, None, :]) / ray_direction
