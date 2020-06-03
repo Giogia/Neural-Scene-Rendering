@@ -1,6 +1,6 @@
 
 import os
-import random
+
 import src.parameters as parameters
 from src.datasets.join import JoinDataset
 
@@ -12,7 +12,7 @@ def get_dataset(camera_list=None, frame_list=None, background=False, depth=False
         frame_list=frame_list,
         background=background,
         depth=depth,
-        fixed_cameras=random.sample(camera_list, k=4),
+        fixed_cameras=['1', '3', '5', '7'],
         image_mean=50.,
         image_std=25.,
         image_size=[960, 540],
