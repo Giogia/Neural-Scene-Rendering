@@ -1,6 +1,6 @@
 
 import os
-
+import random
 import src.parameters as parameters
 from src.datasets.join import JoinDataset
 
@@ -12,12 +12,12 @@ def get_dataset(camera_list=None, frame_list=None, background=False, depth=False
         frame_list=frame_list,
         background=background,
         depth=depth,
-        fixed_cameras=["1", "3", "7"],
+        fixed_cameras=random.sample(camera_list, k=3),
         image_mean=50.,
         image_std=25.,
         image_size=[960, 540],
         subsample_type=subsample_type,
-        subsample_size=128,
+        subsample_size=256,
         world_scale=parameters.SCALE,
         path=os.path.join('experiments', 'Fox', 'data'))
 
