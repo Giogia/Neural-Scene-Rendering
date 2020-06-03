@@ -103,15 +103,16 @@ class Dataset(torch.utils.data.Dataset):
             image_path = os.path.join(self.path, 'camera_' + str(cam), str(frame) + '.exr')
             image = 255 * exr_to_image(image_path).transpose((2, 0, 1)).astype(np.float32)
             height, width = image.shape[1:3]
-            valid = np.float32(1.0) if np.sum(image) != 0 else np.float32(0.)
+            image_valid = np.float32(1.0) if np.sum(image) != 0 else np.float32(0.)
             result["image"] = image
-            result["image_valid"] = valid
+            result["image_valid"] = image_valid
 
             # depth
-            depth = exr_to_depth(image_path, far_threshold=2 * parameters.DISTANCE)
-            depth = np.expand_dims(depth, axis=-1).transpose((2, 0, 1)).astype(np.float32)
-            depth *= self.world_scale
-            result["depth"] = depth
+            if self.use_depth:
+                depth = exr_to_depth(image_path, far_threshold=2 * parameters.DISTANCE)
+                depth = np.expand_dims(depth, axis=-1).transpose((2, 0, 1)).astype(np.float32)
+                depth *= self.world_scale
+                result["depth"] = depth
 
             if self.subsample_type == "patch":
                 ind_x = np.random.randint(0, width - self.subsample_size + 1)

@@ -33,8 +33,9 @@ class ProgressWriter:
         image = Image.fromarray(np.clip(image, 0, 255).astype(np.uint8))
         image.save(os.path.join(self.outpath, "prog_{:06}.jpg".format(iter_num)))
 
-        depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
-        depth = Image.fromarray((255 * depth[:, :, 0] / np.max(depth)).astype(np.uint8))
-        depth.save(os.path.join(self.outpath, "prog_{:06}_depth.jpg".format(iter_num)))
+        if 'depth' in kwargs.keys():
+            depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
+            depth = Image.fromarray((255 * depth[:, :, 0] / np.max(depth)).astype(np.uint8))
+            depth.save(os.path.join(self.outpath, "prog_{:06}_depth.jpg".format(iter_num)))
 
 
