@@ -42,7 +42,7 @@ def get_autoencoder(dataset):
 # and controls how the dataset and autoencoder is created
 class Train:
     batch_size = 4
-    max_iter = 10000
+    max_iter = 100000
 
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
 
