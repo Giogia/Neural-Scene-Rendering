@@ -198,7 +198,7 @@ class Decoder(nn.Module):
 
     def forward(self, encoding, view_pos, loss_list=[]):
         scale = torch.tensor([25., 25., 25., 1.], device=encoding.device)[None, :, None, None, None]
-        bias = torch.tensor([100., 100., 100., 0.], device=encoding.device)[None, :, None, None, None]
+        bias = torch.tensor([50., 50., 50., 0.], device=encoding.device)[None, :, None, None, None]
 
         # run template branch
         view_dir = view_pos / torch.sqrt(torch.sum(view_pos ** 2, dim=-1, keepdim=True))
