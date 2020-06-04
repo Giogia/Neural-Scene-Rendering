@@ -34,7 +34,7 @@ class ProgressWriter:
         image.save(os.path.join(self.outpath, "prog_{:06}.jpg".format(iter_num)))
 
         if 'depth' in kwargs.keys():
-            color_map = plt.get_cmap('magma')
+            color_map = plt.get_cmap('viridis')
             depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
             depth = color_map(depth[:, :, 0] / np.max(depth))
             depth = Image.fromarray((255 * depth[:, :, :3]).astype(np.uint8))
