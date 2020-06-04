@@ -1,6 +1,6 @@
 
 import os
-import random
+
 import src.parameters as parameters
 from src.datasets.join import JoinDataset
 
@@ -12,12 +12,12 @@ def get_dataset(camera_list=None, frame_list=None, background=False, depth=False
         frame_list=frame_list,
         background=background,
         depth=depth,
-        fixed_cameras=random.sample(camera_list, k=3),
+        fixed_cameras=["1", "4", "7"],
         image_mean=50.,
         image_std=25.,
         image_size=[960, 540],
         subsample_type=subsample_type,
-        subsample_size=256,
+        subsample_size=128,
         world_scale=parameters.SCALE,
         path=os.path.join('experiments', 'Fox', 'data'))
 
@@ -31,7 +31,7 @@ def get_autoencoder(dataset):
     return ae_model.Autoencoder(
         dataset,
         encoder_lib.Encoder(n_inputs=3, n_channels=4),
-        decoder_lib.Decoder(global_warp=False),
+        decoder_lib.Decoder(global_warp=False, template_res=128),
         vol_sampler_lib.VolSampler(),
         color_cal_lib.Colorcal(dataset.cameras),
         4. / 256)
@@ -42,7 +42,7 @@ def get_autoencoder(dataset):
 # and controls how the dataset and autoencoder is created
 class Train:
     batch_size = 4
-    max_iter = 10000
+    max_iter = 100000
 
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
 
@@ -64,7 +64,7 @@ class Train:
         return torch.optim.AdamW(ae_params, lr=lr, betas=(0.9, 0.999))
 
     def get_loss_weights(self):
-        return {"i_rgb_mse": 1.0, "i_depth_mse": 1.0, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
+        return {"i_rgb_mse": 1.0, "i_depth_mse": 0.1, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
 
     def get_loss(self):
         import models.losses.aeloss as loss
