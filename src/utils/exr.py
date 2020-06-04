@@ -23,6 +23,7 @@ def exr_to_depth(path, far_threshold=np.inf):
     exr_depth = file.channel('Z', PixelType(PixelType.FLOAT))
     exr_depth = np.fromstring(exr_depth, dtype=np.float32)
     exr_depth[exr_depth > far_threshold] = 0
+    exr_depth /= far_threshold
     exr_depth = np.reshape(exr_depth, size)
 
     return exr_depth

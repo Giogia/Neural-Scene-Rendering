@@ -104,13 +104,13 @@ class Autoencoder(nn.Module):
 
             ray_rgb = ray_rgb + sample_rgb[:, :, 0, :, :] * contrib
             ray_alpha = ray_alpha + contrib
-            ray_length = (ray_length + step.unsqueeze(1) * (contrib > 0))
+            ray_length = ray_length + step[:, None, :, :] * (contrib == 0)
             ray_pos = ray_pos + ray_direction * step[:, :, :, None]
 
             t = t + step
 
-        ray_length *= ray_alpha
-        # todo ray_length /= torch.max(ray_length)
+        # filter and normalize depth
+        ray_length = ray_alpha * ray_length / (torch.max(ray_length) + torch.min(ray_length))
 
         if image is not None:
             image_size = torch.tensor(image.size()[3:1:-1], dtype=torch.float32, device=pixel_coords.device)
@@ -138,7 +138,7 @@ class Autoencoder(nn.Module):
         if "i_alpha_rec" in output_list:
             result["i_alpha_rec"] = ray_alpha
         if "i_depth_rec" in output_list:
-            result["i_depth_rec"] = ray_length * ray_alpha
+            result["i_depth_rec"] = ray_length
 
         # opacity prior
         if "alpha_prior" in loss_list:

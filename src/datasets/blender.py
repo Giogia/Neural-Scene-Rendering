@@ -75,7 +75,6 @@ class Dataset(torch.utils.data.Dataset):
             if self.use_depth:
                 depth = exr_to_depth(image_path, far_threshold=2 * parameters.DISTANCE)
                 depth = np.expand_dims(depth, axis=-1)[::2, ::2, :].transpose((2, 0, 1)).astype(np.float32)
-                depth = self.world_scale * depth
                 image = np.append(image, depth, axis=0)
             if np.sum(image) == 0:
                 valid_input = False
@@ -111,9 +110,9 @@ class Dataset(torch.utils.data.Dataset):
             if self.use_depth:
                 depth = exr_to_depth(image_path, far_threshold=2 * parameters.DISTANCE)
                 depth = np.expand_dims(depth, axis=-1).transpose((2, 0, 1)).astype(np.float32)
-                depth *= self.world_scale
                 result["depth"] = depth
 
+            # subsample coordinates
             if self.subsample_type == "patch":
                 ind_x = np.random.randint(0, width - self.subsample_size + 1)
                 ind_y = np.random.randint(0, height - self.subsample_size + 1)
