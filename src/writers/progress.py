@@ -2,7 +2,7 @@
 import os
 import numpy as np
 from PIL import Image
-
+from matplotlib import pyplot as plt
 
 def concatenate(rec, image):
 
@@ -34,8 +34,10 @@ class ProgressWriter:
         image.save(os.path.join(self.outpath, "prog_{:06}.jpg".format(iter_num)))
 
         if 'depth' in kwargs.keys():
+            color_map = plt.get_cmap('magma')
             depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
-            depth = Image.fromarray((255 * depth[:, :, 0] / np.max(depth)).astype(np.uint8))
+            depth = color_map(depth[:, :, 0] / np.max(depth))
+            depth = Image.fromarray((255 * depth[:, :, :3]).astype(np.uint8))
             depth.save(os.path.join(self.outpath, "prog_{:06}_depth.jpg".format(iter_num)))
 
 
