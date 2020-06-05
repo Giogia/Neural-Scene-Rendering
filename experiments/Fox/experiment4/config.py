@@ -30,7 +30,7 @@ def get_autoencoder(dataset):
     import models.colorcals.color_calibrator as color_cal_lib
     return ae_model.Autoencoder(
         dataset,
-        encoder_lib.Encoder(n_inputs=3, n_channels=4),
+        encoder_lib.Encoder(n_inputs=3, n_channels=3),
         decoder_lib.Decoder(global_warp=True, template_res=128),
         vol_sampler_lib.VolSampler(),
         color_cal_lib.Colorcal(dataset.cameras),
