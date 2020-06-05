@@ -64,7 +64,7 @@ class Train:
         return torch.optim.AdamW(ae_params, lr=lr, betas=(0.9, 0.999))
 
     def get_loss_weights(self):
-        return {"i_rgb_mse": 1.0, "i_depth_mse": 0.1, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
+        return {"i_rgb_mse": 1.0, "i_depth_mse": 1.0, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
 
     def get_loss(self):
         import models.losses.aeloss as loss
@@ -110,7 +110,7 @@ class Render:
 
     def get_dataset(self):
         dataset = get_dataset(camera_list=[] if self.cam is None else [self.cam],
-                              frame_list=[i for i in range(parameters.START_FRAME, parameters.START_FRAME+1)],
+                              frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                               background=True,
                               depth=True)
         if self.cam is None:

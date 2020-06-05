@@ -110,7 +110,7 @@ class Autoencoder(nn.Module):
             t = t + step
 
         # filter and normalize depth
-        ray_length = ray_alpha * ray_length / (torch.max(ray_length) + torch.min(ray_length))
+        ray_length = ray_length / (torch.max(ray_length) + torch.min(ray_length))  # ray_alpha *
 
         if image is not None:
             image_size = torch.tensor(image.size()[3:1:-1], dtype=torch.float32, device=pixel_coords.device)
