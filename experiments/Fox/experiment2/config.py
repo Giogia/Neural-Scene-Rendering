@@ -13,7 +13,7 @@ def get_dataset(camera_list=None, frame_list=None, background=False, depth=False
         background=background,
         depth=depth,
         fixed_cameras=["1", "4", "7"],
-        image_mean=50.,
+        image_mean=100.,
         image_std=25.,
         image_size=[960, 540],
         subsample_type=subsample_type,
