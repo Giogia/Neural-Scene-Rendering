@@ -4,15 +4,14 @@ import os
 import numpy as np
 import torch.utils.data
 
-from src import parameters
+import src.parameters as parameters
 from src.utils.csv import read_csv
 from src.utils.exr import exr_to_image, exr_to_depth
 
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, camera_list, frame_list, background=False, depth=False,
-                 fixed_cameras=[], image_mean=0., image_std=1., image_size=[0, 0],
-                 world_scale=1., subsample_type=None, subsample_size=0, path=None):
+                 subsample_type=None, subsample_size=0, path=None):
 
         self.cameras = sorted(list(map(str, camera_list)))
         self.frame_list = frame_list
@@ -23,11 +22,11 @@ class Dataset(torch.utils.data.Dataset):
         self.use_background = background
         self.use_depth = depth
 
-        self.fixed_cameras = fixed_cameras
-        self.image_mean = image_mean
-        self.image_std = image_std
-        self.image_size = image_size
-        self.world_scale = world_scale
+        self.fixed_cameras = parameters.FIXED_CAMERAS
+        self.image_mean = parameters.IMAGE_MEAN
+        self.image_std = parameters.IMAGE_STD
+        self.image_size = parameters.IMAGE_SIZE
+        self.world_scale = parameters.WORLD_SCALE
         self.subsample_type = subsample_type
         self.subsample_size = subsample_size
         self.path = path

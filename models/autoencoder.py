@@ -41,7 +41,7 @@ class Autoencoder(nn.Module):
         return ret
 
     def forward(self, loss_list, camera_rotation, camera_position, focal, principal_point, pixel_coords, valid_input,
-                fixed_cam_image=None, encoding=None, keypoints=None, camera_index=None,
+                fixed_cam_image=None, encoding=None, camera_index=None,
                 image=None, image_valid=None, depth=None, view_template=False,
                 output_list=[]):
 
@@ -54,7 +54,7 @@ class Autoencoder(nn.Module):
             result["losses"].update(encoder_output["losses"])
 
         # decode
-        decoder_output = self.decoder(encoding, camera_position, loss_list)
+        decoder_output = self.decoder(encoding, camera_position, loss_list, self.image_mean, self.image_std)
         result["losses"].update(decoder_output["losses"])
 
         # NHWC

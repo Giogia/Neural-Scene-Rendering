@@ -196,9 +196,9 @@ class Decoder(nn.Module):
             for m in [self.g_warp_s, self.g_warp_r, self.g_warp_t]:
                 init_seq(m)
 
-    def forward(self, encoding, view_pos, loss_list=[]):
-        scale = torch.tensor([25., 25., 25., 1.], device=encoding.device)[None, :, None, None, None]
-        bias = torch.tensor([100., 100., 100., 0.], device=encoding.device)[None, :, None, None, None]
+    def forward(self, encoding, view_pos, loss_list=[], image_mean=0., image_std=1.):
+        scale = torch.tensor([image_std, image_std, image_std, 1.], device=encoding.device)[None, :, None, None, None]
+        bias = torch.tensor([image_mean, image_mean, image_mean, 0.], device=encoding.device)[None, :, None, None, None]
 
         # run template branch
         view_dir = view_pos / torch.sqrt(torch.sum(view_pos ** 2, dim=-1, keepdim=True))

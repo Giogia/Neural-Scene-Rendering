@@ -1,22 +1,20 @@
-
 import numpy as np
-
 import torch.utils.data
-from src.parameters import BACKGROUND_COLOR
+import src.parameters as parameters
 
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, length, period=128):
         self.length = length
         self.period = period
-        self.width, self.height = 960, 540
+        self.width, self.height = parameters.IMAGE_SIZE
         self.cameras = ['rotate']
 
         self.focal = np.array([1000. * (self.width / 960.), 1000. * (self.width / 960.)], dtype=np.float32)
         self.principal_point = np.array([self.width * 0.5, self.height * 0.5], dtype=np.float32)
         self.size = {self.cameras[0]: np.array([self.width, self.height])}
         self.background = {self.cameras[0]: np.stack([color * np.ones((self.height, self.width), dtype=np.float32)
-                                                     for color in BACKGROUND_COLOR])}
+                                                     for color in parameters.BACKGROUND_COLOR])}
 
     def __len__(self):
         return self.length
