@@ -58,7 +58,7 @@ class Train:
             [{"params": x} for x in ae.encoder.parameters()],
             [{"params": x} for x in ae.decoder.parameters()],
             [{"params": x} for x in ae.color_calibrator.parameters()])
-        return torch.optim.AdamW(ae_params, lr=lr, betas=(0.9, 0.999))
+        return torch.optim.Adam(ae_params, lr=lr, betas=(0.9, 0.999))
 
     def get_loss_weights(self):
         return {"i_rgb_mse": 1.0, "i_depth_mse": 0.1, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
@@ -67,11 +67,12 @@ class Train:
         import models.losses.aeloss as loss
         return loss.AutoencoderLoss()
 
-    def get_scheduler(self, optimizer, base_lr, max_lr, iter_num, step=100):
+    def get_scheduler(self, optimizer, base_lr, max_lr, iter_num, step=1000):
+        # step size 2 to 10 times epoch iterations (samples/batch)
         from torch.optim.lr_scheduler import CyclicLR
         return CyclicLR(optimizer, base_lr, max_lr,
                         step_size_up=step,
-                        cycle_momentum=False,
+                        cycle_momentum=True,
                         last_epoch=iter_num - 1)
 
 
