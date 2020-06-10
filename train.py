@@ -51,7 +51,7 @@ if __name__ == "__main__":
     parser.add_argument('--profile', type=str, default="Train", help='config profile')
     parser.add_argument('--devices', type=int, nargs='+', default=[0], help='devices')
     parser.add_argument('--resume', action='store_true', help='resume training')
-    parser.add_argument('--log', action='store_false', help='remove log')
+    parser.add_argument('--nolog', action='store_true', help='remove log')
     parser.add_argument('--lrtest', action='store_true', help='perform learning rate test')
     parser.add_argument('--mpt', action='store_true', help='enable mixed precision training')
     parser.add_argument('--super', action='store_true', help='enable super convergence')
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     outpath = os.path.dirname(args.experconfig)
-    if args.log:
+    if not args.nolog:
         log = Logger("{}/log.txt".format(outpath), args.resume)
     print("Python", sys.version)
     print("PyTorch", torch.__version__)
