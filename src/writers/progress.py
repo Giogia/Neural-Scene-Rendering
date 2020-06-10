@@ -31,16 +31,16 @@ class ProgressWriter:
     def batch(self, iter_num, **kwargs):
 
         image = concatenate(kwargs['i_rgb_rec'], kwargs['image'])
+        self.tensor_board.add_image(iter_num, image)
         image = Image.fromarray(np.clip(image, 0, 255).astype(np.uint8))
         image.save(os.path.join(self.outpath, "prog_{:06}.jpg".format(iter_num)))
-        self.tensor_board.add_image(iter_num, image)
 
         if 'depth' in kwargs.keys():
             color_map = plt.get_cmap('magma')
             depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
             depth = color_map(depth[:, :, 0] / np.max(depth))
+            self.tensor_board.add_image(iter_num, depth)
             depth = Image.fromarray((255 * depth[:, :, :3]).astype(np.uint8))
             depth.save(os.path.join(self.outpath, "prog_{:06}_depth.jpg".format(iter_num)))
-            self.tensor_board.add_image(iter_num, depth)
 
 
