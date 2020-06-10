@@ -301,7 +301,7 @@ class LRFinder(object):
 
         return running_loss / len(dataloader.dataset)
 
-    def plot(self, skip_start=10, skip_end=5, log_lr=True, show_lr=None, ax=None):
+    def plot(self, skip_start=10, skip_end=5, log_lr=False, show_lr=None, ax=None):
         """Plots the learning rate range test.
 
         Arguments:
