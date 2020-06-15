@@ -161,8 +161,12 @@ if __name__ == "__main__":
             lr = ae_optimizer.param_groups[0]['lr']
 
             # print current information
-            writer.tensorboard.add_scalar('training loss', loss.item(), iter_num)
-            writer.tensorboard.add_scalar('learning rate', lr, iter_num)
+            writer.tensorboard.add_scalar('Learning Rate', lr, iter_num)
+            writer.tensorboard.add_scalar('Total Loss', loss.item(), iter_num)
+            for k, v in output['losses'].items():
+                v = float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v, tuple) else torch.mean(v))
+                writer.tensorboard.add_scalar(k, v, iter_num)
+
             print("Iteration {:06d}: "
                   "lr = {:.5f}, ".format(iter_num, lr) +
                   "loss = {:.5f}, ".format(float(loss.item())) +
