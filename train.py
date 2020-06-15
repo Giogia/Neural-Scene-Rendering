@@ -161,6 +161,8 @@ if __name__ == "__main__":
             lr = ae_optimizer.param_groups[0]['lr']
 
             # print current information
+            writer.tensorboard.add_scalar('training loss', loss.item(), iter_num)
+            writer.tensorboard.add_scalar('learning rate', lr, iter_num)
             print("Iteration {:06d}: "
                   "lr = {:.5f}, ".format(iter_num, lr) +
                   "loss = {:.5f}, ".format(float(loss.item())) +
