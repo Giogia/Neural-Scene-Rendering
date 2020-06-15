@@ -39,8 +39,8 @@ class ProgressWriter:
 
     def batch(self, iter_num, **kwargs):
 
-        self.tensor_board.add_image('predicted colors', make_grid(kwargs['i_rgb_rec']))
-        self.tensor_board.add_image('input colors', make_grid(kwargs['image']))
+        self.tensor_board.add_image('predicted colors',
+                                    make_grid(kwargs['i_rgb_rec'][:, :, ::2, ::2]), global_step=iter_num)
 
         image = concatenate(kwargs['i_rgb_rec'], kwargs['image'])
         image = np.clip(image, 0, 255).astype(np.uint8)
@@ -48,8 +48,8 @@ class ProgressWriter:
 
         if 'depth' in kwargs.keys():
 
-            self.tensor_board.add_image('predicted depth', make_grid(kwargs['i_depth_rec']))
-            self.tensor_board.add_image('input depth', make_grid(kwargs['depth']))
+            self.tensor_board.add_image('predicted depth',
+                                        make_grid(kwargs['i_depth_rec'][:, :, ::2, ::2]), global_step=iter_num)
 
             depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
             depth = recolor(depth)
