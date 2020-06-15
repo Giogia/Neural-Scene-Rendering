@@ -73,6 +73,9 @@ venv
 # Pytorch
 *.pt
 
+#Tensorboard
+events.out.tfevents*
+
 # Experiments
 experiments/Lincoln
 experiments/dryice1
