@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image
 from matplotlib import pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
-from torchvision.utils import make_grid
+
 
 def concatenate(rec, image):
 
@@ -39,8 +39,7 @@ class ProgressWriter:
 
     def batch(self, iter_num, **kwargs):
 
-        self.tensor_board.add_images('predicted colors',
-                                    make_grid(kwargs['i_rgb_rec'][:, :, ::2, ::2]), global_step=iter_num)
+        self.tensor_board.add_images('predicted colors', kwargs['i_rgb_rec'][:, :, ::2, ::2], global_step=iter_num)
 
         image = concatenate(kwargs['i_rgb_rec'], kwargs['image'])
         image = np.clip(image, 0, 255).astype(np.uint8)
@@ -48,8 +47,7 @@ class ProgressWriter:
 
         if 'depth' in kwargs.keys():
 
-            self.tensor_board.add_images('predicted depth',
-                                        make_grid(kwargs['i_depth_rec'][:, :, ::2, ::2]), global_step=iter_num)
+            self.tensor_board.add_images('predicted depth', kwargs['i_depth_rec'][:, :, ::2, ::2], global_step=iter_num)
 
             depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
             depth = recolor(depth)
