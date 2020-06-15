@@ -38,9 +38,9 @@ class ProgressWriter:
         if 'depth' in kwargs.keys():
             color_map = plt.get_cmap('magma')
             depth = concatenate(kwargs['i_depth_rec'], kwargs['depth'])
-            depth = color_map(depth[:, :, 0] / np.max(depth))
+            depth = 255 * color_map(depth[:, :, 0] / np.max(depth))[:, :, :3]
             self.tensor_board.add_image(iter_num, depth)
-            depth = Image.fromarray((255 * depth[:, :, :3]).astype(np.uint8))
+            depth = Image.fromarray(np.clip(depth, 0, 255).astype(np.uint8))
             depth.save(os.path.join(self.outpath, "prog_{:06}_depth.jpg".format(iter_num)))
 
 
