@@ -83,3 +83,5 @@ experiments/dryice1
 # Debug file
 run.py
 Neural_volumes.ipynb
+*.ipynb
+train.py
