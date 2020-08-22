@@ -89,7 +89,12 @@ class Dataset(torch.utils.data.Dataset):
 
         # image data
         if cam is not None:
+
             # camera data
+            transformation = read_csv(os.path.join(self.path, 'camera_' + str(cam), str(frame) + '.csv'))
+            self.model_transformation = np.array(transformation, dtype=np.float32)[0:][0:-1]
+            self.model_transformation[:3, :3] *= self.world_scale
+
             result["camera_rotation"] = np.dot(self.model_transformation[:3, :3].T, self.camera_rotation[cam].T).T
             result["camera_position"] = np.dot(self.model_transformation[:3, :3].T,
                                                self.camera_position[cam] - self.model_transformation[:3, 3])
