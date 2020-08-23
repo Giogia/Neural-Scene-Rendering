@@ -15,7 +15,7 @@ def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=F
         depth=use_depth,
         subsample_type=subsample_type,
         subsample_size=128,
-        path=os.path.join('experiments', 'Carla', 'data', parameters.ANIMATION))
+        path=os.path.join('experiments', 'Carla', 'data', 'Finger Taunt'))
 
 
 def get_autoencoder(dataset):
