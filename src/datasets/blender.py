@@ -33,19 +33,15 @@ class Dataset(torch.utils.data.Dataset):
 
         # compute camera positions
         self.camera_position, self.camera_rotation, self.focal, self.principal_point, self.size = {}, {}, {}, {}, {}
-        intrinsic = np.array(read_csv(os.path.join(self.path, 'camera_intrinsic.csv')))
+
         for cam in self.cameras:
+            intrinsic = np.array(read_csv(os.path.join(self.path, 'camera_' + cam, 'intrinsic.csv')))
             extrinsic = np.array(read_csv(os.path.join(self.path, 'camera_' + cam, 'pose.csv')))[:][:-1]
             self.camera_position[cam] = (-np.dot(extrinsic[:3, :3].T, extrinsic[:3, 3])).astype(np.float32)
             self.camera_rotation[cam] = (extrinsic[:3, :3]).astype(np.float32)
             self.focal[cam] = np.diag(intrinsic[:2, :2]).astype(np.float32)
             self.principal_point[cam] = intrinsic[:2, 2].astype(np.float32)
             self.size[cam] = np.array(self.image_size)
-
-        # transformation that places the center of the object at the origin
-        transformation = read_csv(os.path.join(self.path, "model.csv"))
-        self.model_transformation = np.array(transformation, dtype=np.float32)[0:][0:-1]
-        self.model_transformation[:3, :3] *= self.world_scale
 
         # load background images for each camera
         if self.use_background:

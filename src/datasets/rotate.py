@@ -4,7 +4,7 @@ import src.parameters as parameters
 
 
 class Dataset(torch.utils.data.Dataset):
-    def __init__(self, length, period=128):
+    def __init__(self, length, period=(parameters.END_FRAME-parameters.START_FRAME+1)):
         self.length = length
         self.period = period
         self.width, self.height = parameters.IMAGE_SIZE
@@ -21,7 +21,7 @@ class Dataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
 
-        t = (np.cos(index * 2. * np.pi / self.period) * 0.5 + 0.5)
+        t = index / self.period
         x = np.cos(t * 2 * np.pi)
         y = np.sin(t * 2 * np.pi)
         z = 0

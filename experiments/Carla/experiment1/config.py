@@ -6,7 +6,7 @@ from src.datasets.join import JoinDataset
 USE_DEPTH = True
 
 
-def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None):
+def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation=None):
     from src.datasets.blender import Dataset
     return Dataset(
         camera_list=camera_list,
@@ -15,7 +15,7 @@ def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=F
         depth=use_depth,
         subsample_type=subsample_type,
         subsample_size=128,
-        path=os.path.join('experiments', 'Carla', 'data', 'Attack'))
+        path=os.path.join('experiments', 'Carla', 'data', animation))
 
 
 def get_autoencoder(dataset):
@@ -47,7 +47,8 @@ class Train:
                            frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                            background=True,
                            use_depth=USE_DEPTH,
-                           subsample_type="random2")
+                           subsample_type="random2",
+                           animation='Attack')
 
     def get_optimizer(self, ae):
         import itertools
@@ -108,7 +109,8 @@ class Render:
         dataset = get_dataset(camera_list=[] if self.cam is None else [self.cam],
                               frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                               background=True,
-                              use_depth=USE_DEPTH)
+                              use_depth=USE_DEPTH,
+                              animation='Finger Taunt')
         if self.cam is None:
 
             from src.datasets.rotate import Dataset
