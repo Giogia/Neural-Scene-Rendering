@@ -6,7 +6,7 @@ from src.datasets.join import JoinDataset
 USE_DEPTH = True
 
 
-def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation=None):
+def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation='Attack'):
     from src.datasets.blender import Dataset
     return Dataset(
         camera_list=camera_list,
@@ -47,8 +47,7 @@ class Train:
                            frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                            background=True,
                            use_depth=USE_DEPTH,
-                           subsample_type="random2",
-                           animation='Attack')
+                           subsample_type="random2")
 
     def get_optimizer(self, ae):
         import itertools
