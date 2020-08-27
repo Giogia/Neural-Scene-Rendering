@@ -6,7 +6,7 @@ from src.datasets.join import JoinDataset
 USE_DEPTH = False
 
 
-def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation='Attack'):
+def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation='Finger Taunt'):
     from src.datasets.blender import Dataset
     return Dataset(
         camera_list=camera_list,
@@ -14,7 +14,7 @@ def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=F
         background=background,
         depth=use_depth,
         subsample_type=subsample_type,
-        subsample_size=128,
+        subsample_size=256,
         path=os.path.join('experiments', 'Carla', 'data', animation))
 
 
@@ -60,7 +60,7 @@ class Train:
         return torch.optim.AdamW(ae_params, lr=lr, betas=(0.9, 0.999), amsgrad=True)
 
     def get_loss_weights(self):
-        return {"i_rgb_mse": 1.0, "i_depth_mse": 10, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
+        return {"i_rgb_mse": 1.0, "i_depth_mse": 10, "ssim": 1.0, "psnr": 1.0, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
 
     def get_loss(self):
         import models.losses.aeloss as loss
