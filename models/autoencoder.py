@@ -173,6 +173,18 @@ class Autoencoder(nn.Module):
 
                 result["losses"]["i_rgb_mse"] = (i_rgb_mse, i_rgb_mse_weight)
 
+            if "ssim" in loss_list:
+
+                from src.utils.metrics import SSIM
+                ssim = SSIM()
+                result["losses"]["ssim"] = ssim(ray_rgb, image).item()
+
+            if "psnr" in loss_list:
+
+                from src.utils.metrics import PSNR
+                psnr = PSNR()
+                result["losses"]["psnr"] = psnr(ray_rgb, image).item()
+
             if depth is not None:
 
                 if pixel_coords.size()[1:3] != depth.size()[2:4]:
