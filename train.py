@@ -166,6 +166,8 @@ if __name__ == "__main__":
             for k, v in output['losses'].items():
                 v = float(torch.sum(v[0]) / torch.sum(v[1]) if isinstance(v, tuple) else torch.mean(v))
                 writer.tensorboard.add_scalar(k, v, iter_num)
+            for k, v in output['metrics'].items():
+                writer.tensorboard.add_scalar(k, v, iter_num)
 
             print("Iteration {:06d}: "
                   "lr = {:.5f}, ".format(iter_num, lr) +
