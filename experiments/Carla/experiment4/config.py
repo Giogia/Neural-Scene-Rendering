@@ -14,7 +14,7 @@ def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=F
         background=background,
         depth=use_depth,
         subsample_type=subsample_type,
-        subsample_size=256,
+        subsample_size=192,
         path=os.path.join('experiments', 'Carla', 'data', animation))
 
 
