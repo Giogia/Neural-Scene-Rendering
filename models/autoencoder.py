@@ -45,7 +45,7 @@ class Autoencoder(nn.Module):
                 image=None, image_valid=None, depth=None, view_template=False,
                 output_list=[]):
 
-        result = {"losses": {}}
+        result = {"losses": {}, "metrics": {}}
 
         # encode input or get encoding
         if encoding is None:
