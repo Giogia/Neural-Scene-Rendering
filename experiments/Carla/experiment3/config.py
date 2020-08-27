@@ -6,7 +6,7 @@ from src.datasets.join import JoinDataset
 USE_DEPTH = True
 
 
-def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation='Attack'):
+def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation='Finger Taunt'):
     from src.datasets.blender import Dataset
     return Dataset(
         camera_list=camera_list,
