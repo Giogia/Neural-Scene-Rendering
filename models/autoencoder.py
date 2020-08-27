@@ -175,11 +175,11 @@ class Autoencoder(nn.Module):
 
             from src.utils.metrics import SSIM
             ssim = SSIM()
-            result["losses"]["ssim"] = ssim(ray_rgb, image).item()
+            result["metrics"]["ssim"] = ssim(ray_rgb, image).item()
 
             from src.utils.metrics import PSNR
             psnr = PSNR()
-            result["losses"]["psnr"] = psnr(ray_rgb, image).item()
+            result["metrics"]["psnr"] = psnr(ray_rgb, image).item()
 
             if depth is not None:
 
