@@ -52,7 +52,7 @@ class Train:
     def get_optimizer(self, ae):
         import itertools
         import torch.optim
-        lr = 0.00015
+        lr = 0.0001
         ae_params = itertools.chain(
             [{"params": x} for x in ae.encoder.parameters()],
             [{"params": x} for x in ae.decoder.parameters()],
@@ -109,7 +109,7 @@ class Render:
                               frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                               background=True,
                               use_depth=USE_DEPTH,
-                              animation='Finger Taunt')
+                              animation='Backflip')
         if self.cam is None:
 
             from src.datasets.rotate import Dataset
