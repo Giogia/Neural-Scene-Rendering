@@ -51,11 +51,6 @@ if __name__ == "__main__":
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batchsize, shuffle=False, num_workers=16)
     print("Dataset instantiated ({:.2f} s)".format(time.time() - start_time))
 
-    # data writer
-    start_time = time.time()
-    writer = progress.get_writer()
-    print("Writer instantiated ({:.2f} s)".format(time.time() - start_time))
-
     # build autoencoder
     start_time = time.time()
     ae = profile.get_autoencoder(dataset)
