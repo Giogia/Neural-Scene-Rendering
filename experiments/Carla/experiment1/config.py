@@ -145,7 +145,7 @@ class Evaluate:
 
     def get_dataset(self):
         return get_dataset(camera_list=[i + 1 for i in range(parameters.CAMERAS_NUMBER)],
-                           frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
+                           frame_list=[i for i in range(parameters.START_FRAME, parameters.START_FRAME+10)],
                            background=True,
                            use_depth=USE_DEPTH,
                            subsample_type="random2",
