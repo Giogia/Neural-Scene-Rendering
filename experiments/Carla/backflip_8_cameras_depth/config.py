@@ -52,7 +52,7 @@ class Train:
     def get_optimizer(self, ae):
         import itertools
         import torch.optim
-        lr = 0.00015
+        lr = 0.0001
         ae_params = itertools.chain(
             [{"params": x} for x in ae.encoder.parameters()],
             [{"params": x} for x in ae.decoder.parameters()],
@@ -60,7 +60,7 @@ class Train:
         return torch.optim.AdamW(ae_params, lr=lr, betas=(0.9, 0.999), amsgrad=True)
 
     def get_loss_weights(self):
-        return {"i_rgb_mse": 1.0, "i_depth_mse": 1000, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
+        return {"i_rgb_mse": 1.0, "i_depth_mse": 100, "kl_div": 0.001, "alpha_prior": 0.01, "tvl1": 0.01}
 
     def get_loss(self):
         import models.losses.aeloss as loss
