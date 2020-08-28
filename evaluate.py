@@ -95,5 +95,5 @@ if __name__ == "__main__":
             item_num += batch_size
             iter_num += 1
 
-    print(sum(psnr) / len(psnr))
-    print(sum(ssim) / len(ssim))
+    print("PSNR: {:4f}".format(sum(psnr) / len(psnr)))
+    print("SSIM: {:4f}".format(sum(ssim) / len(ssim)))

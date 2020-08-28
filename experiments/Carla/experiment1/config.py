@@ -133,7 +133,7 @@ class Render:
 class Evaluate:
     """Evaluate model results using SSIM and PSNR metrics"""
 
-    def __init__(self, animation='Finger Taunt', view_template=False):
+    def __init__(self, animation='Attack', view_template=False):
         self.view_template = view_template
         self.animation  = animation
 
