@@ -1,8 +1,6 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from math import log
-
 
 class Autoencoder(nn.Module):
     def __init__(self, dataset, encoder, decoder, volume_sampler, color_calibrator, dt, step_jitter=0.01,
@@ -192,9 +190,8 @@ class Autoencoder(nn.Module):
                 if pixel_coords.size()[1:3] != depth.size()[2:4]:
                     depth = F.grid_sample(depth, sample_coords, align_corners=False)
 
-
-                i_depth_sqerr = weight * (log(depth) - log(ray_length)) ** 2
-                i_depth_sqerr_2 = weight * (log(depth) - log(ray_length))
+                i_depth_sqerr = weight * (torch.log(depth) - torch.log(ray_length)) ** 2
+                i_depth_sqerr_2 = weight * (torch.log(depth) - torch.log(ray_length))
 
                 # i_depth_sqerr = weight * (depth - ray_length) ** 2
 
