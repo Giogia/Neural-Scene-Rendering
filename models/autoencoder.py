@@ -190,17 +190,13 @@ class Autoencoder(nn.Module):
                 if pixel_coords.size()[1:3] != depth.size()[2:4]:
                     depth = F.grid_sample(depth, sample_coords, align_corners=False)
 
-                i_depth_sqerr = weight * (torch.log(depth) - torch.log(ray_length)) ** 2
-                i_depth_sqerr_2 = weight * (torch.log(depth) - torch.log(ray_length))
-
-                # i_depth_sqerr = weight * (depth - ray_length) ** 2
+                i_depth_sqerr = weight * (depth - ray_length) ** 2
 
                 if "i_depth_sqerr" in output_list:
                     result["i_depth_sqerr"] = i_depth_sqerr
 
                 if "i_depth_mse" in loss_list:
-                    i_depth_mse = torch.sum(i_depth_sqerr.view(i_depth_sqerr.size(0), -1), dim=-1) \
-                                  - torch.sum(i_depth_sqerr_2.view(i_depth_sqerr_2.size(0), -1), dim=-1) ** 2
+                    i_depth_mse = torch.sum(i_depth_sqerr.view(i_depth_sqerr.size(0), -1), dim=-1)
                     i_depth_mse_weight = torch.sum(weight.view(weight.size(0), -1), dim=-1)
 
                     result["losses"]["i_depth_mse"] = (i_depth_mse, i_depth_mse_weight)
