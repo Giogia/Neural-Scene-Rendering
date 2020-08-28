@@ -82,7 +82,7 @@ if __name__ == "__main__":
             output = ae([], **{k: x.to(device) for k, x in data.items()}, **profile.get_ae_args())
 
             for k, v in output["metrics"].items():
-                print("{}: {:4f}").format(k, v)
+                print("{}: {:4f}".format(k, v))
 
             psnr.append(output['metrics']['psnr'])
             ssim.append(output['metrics']['ssim'])
