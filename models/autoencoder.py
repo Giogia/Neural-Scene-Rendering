@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from math import log
 
 
 class Autoencoder(nn.Module):
@@ -68,11 +69,11 @@ class Autoencoder(nn.Module):
             t1 = (-1.0 - camera_position[:, None, None, :]) / ray_direction
             t2 = (1.0 - camera_position[:, None, None, :]) / ray_direction
             t_min = torch.max(torch.min(t1[..., 0], t2[..., 0]),
-                             torch.max(torch.min(t1[..., 1], t2[..., 1]),
-                                       torch.min(t1[..., 2], t2[..., 2])))
+                              torch.max(torch.min(t1[..., 1], t2[..., 1]),
+                                        torch.min(t1[..., 2], t2[..., 2])))
             t_max = torch.min(torch.max(t1[..., 0], t2[..., 0]),
-                             torch.min(torch.max(t1[..., 1], t2[..., 1]),
-                                       torch.max(t1[..., 2], t2[..., 2])))
+                              torch.min(torch.max(t1[..., 1], t2[..., 1]),
+                                        torch.max(t1[..., 2], t2[..., 2])))
 
             intersections = t_min < t_max
             t = torch.where(intersections, t_min, torch.zeros_like(t_min)).clamp(min=0.)
@@ -93,7 +94,8 @@ class Autoencoder(nn.Module):
             valid = torch.prod(torch.gt(ray_pos, -1.0) * torch.lt(ray_pos, 1.0), dim=-1).byte()
             valid_f = valid.float()
 
-            sample_rgb, sample_alpha = self.volume_sampler(ray_pos[:, None, :, :, :], **decoder_output, view_template=view_template)
+            sample_rgb, sample_alpha = self.volume_sampler(ray_pos[:, None, :, :, :], **decoder_output,
+                                                           view_template=view_template)
 
             with torch.no_grad():
                 step = self.dt * torch.exp(self.step_jitter * torch.randn_like(t))
@@ -122,10 +124,14 @@ class Autoencoder(nn.Module):
 
             if pixel_coords.size()[1:3] != image.size()[2:4]:
                 background = F.grid_sample(
-                    torch.stack([self.background[self.cameras[camera_index[i].item()]] for i in range(camera_position.size(0))], dim=0),
+                    torch.stack(
+                        [self.background[self.cameras[camera_index[i].item()]] for i in range(camera_position.size(0))],
+                        dim=0),
                     sample_coords)
             else:
-                background = torch.stack([self.background[self.cameras[camera_index[i].item()]] for i in range(camera_position.size(0))], dim=0)
+                background = torch.stack(
+                    [self.background[self.cameras[camera_index[i].item()]] for i in range(camera_position.size(0))],
+                    dim=0)
 
             ray_rgb = ray_rgb + (1. - ray_alpha) * background.clamp(min=0.)
 
@@ -186,7 +192,11 @@ class Autoencoder(nn.Module):
                 if pixel_coords.size()[1:3] != depth.size()[2:4]:
                     depth = F.grid_sample(depth, sample_coords, align_corners=False)
 
-                i_depth_sqerr = weight * (depth - ray_length) ** 2
+                err = weight ** 2 * (log(depth) - log(ray_length))
+                i_depth_sqerr = weight * (log(depth) - log(ray_length)) ** 2 \
+                                - torch.sum(err.view(err.size(0), -1), dim=-1) ** 2
+
+                # i_depth_sqerr = weight * (depth - ray_length) ** 2
 
                 if "i_depth_sqerr" in output_list:
                     result["i_depth_sqerr"] = i_depth_sqerr
