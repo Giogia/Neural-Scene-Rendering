@@ -71,8 +71,8 @@ if __name__ == "__main__":
     iter_num = 0
     start_time = time.time()
 
-    psnr = []
     ssim = []
+    psnr = []
 
     with torch.no_grad():
         for data in dataloader:
@@ -95,5 +95,5 @@ if __name__ == "__main__":
             item_num += batch_size
             iter_num += 1
 
-    print("PSNR: {:4f}".format(sum(psnr) / len(psnr)))
     print("SSIM: {:4f}".format(sum(ssim) / len(ssim)))
+    print("PSNR: {:4f}".format(sum(psnr) / len(psnr)))
