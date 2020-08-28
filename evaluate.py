@@ -86,8 +86,6 @@ if __name__ == "__main__":
             # forward
             output = ae([], **{k: x.to(device) for k, x in data.items()}, **profile.get_ae_args())
 
-            writer.batch(iter_num, **data, **output)
-
             print(output['metrics'])
             psnr.append(output['metrics']['psnr'])
             ssim.append(output['metrics']['ssim'])
