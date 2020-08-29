@@ -109,7 +109,7 @@ class Render:
                               frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                               background=True,
                               use_depth=USE_DEPTH,
-                              animation='Finger Taunt')
+                              animation='Backflip')
         if self.cam is None:
 
             from src.datasets.rotate import Dataset
