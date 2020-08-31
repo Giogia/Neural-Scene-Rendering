@@ -8,7 +8,6 @@ MODEL = 'Eric'
 ANIMATION = 'Finger Taunt'
 
 
-
 def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation=ANIMATION):
     from src.datasets.blender import Dataset
     return Dataset(
@@ -46,7 +45,7 @@ class Train:
     def get_autoencoder(self, dataset): return get_autoencoder(dataset)
 
     def get_dataset(self):
-        return get_dataset(camera_list=[i for i in range(1, parameters.CAMERAS_NUMBER, 4)],
+        return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
                            frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                            background=True,
                            use_depth=USE_DEPTH,
@@ -83,7 +82,7 @@ class Progress:
 
     def get_ae_args(self): return dict(output_list=["i_rgb_rec", "i_depth_rec"])
 
-    def get_dataset(self): return get_dataset(camera_list=[i for i in range(1, parameters.CAMERAS_NUMBER, 4)],
+    def get_dataset(self): return get_dataset(camera_list=[i+1 for i in range(parameters.CAMERAS_NUMBER)],
                                               frame_list=[parameters.END_FRAME],
                                               background=True,
                                               use_depth=USE_DEPTH)
