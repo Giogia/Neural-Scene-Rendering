@@ -47,7 +47,7 @@ tmtagsHistory
 *.avi
 *.jpg
 *.png
-*.exr
+#*.exr
 
 # 3D Objects
 ######################
@@ -79,6 +79,7 @@ events.out.tfevents*
 # Experiments
 experiments/Lincoln
 experiments/dryice1
+experiments/Eric/data/Cheer
 
 # Debug file
 run.py
