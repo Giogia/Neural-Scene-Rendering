@@ -47,7 +47,7 @@ tmtagsHistory
 *.avi
 *.jpg
 *.png
-# *.exr
+*.exr
 
 # 3D Objects
 ######################
@@ -68,7 +68,7 @@ tmtagsHistory
 venv
 
 # additional files
-# *.csv
+*.csv
 
 # Pytorch
 *.pt
@@ -77,12 +77,4 @@ venv
 events.out.tfevents*
 
 # Experiments
-experiments/Lincoln
-experiments/dryice1
-experiments/Eric/data/Cheer
 
-# Debug file
-run.py
-Neural_volumes.ipynb
-*.ipynb
-train.py
