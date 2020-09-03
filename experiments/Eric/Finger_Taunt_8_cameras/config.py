@@ -96,7 +96,7 @@ class Progress:
 class Render:
     """Render model with training camera or from novel viewpoints."""
 
-    def __init__(self, cam=None, show_target=False, view_template=False):
+    def __init__(self, cam=1, show_target=False, view_template=False):
         self.cam = cam
         self.show_target = show_target
         self.view_template = view_template
