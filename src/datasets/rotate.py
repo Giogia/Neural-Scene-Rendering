@@ -23,8 +23,8 @@ class Dataset(torch.utils.data.Dataset):
 
         t = index / self.period
         x = np.cos(t * 2 * np.pi)
-        y = np.sin(t * 2 * np.pi)
-        z = 0
+        y = 0
+        z = np.sin(t * 2 * np.pi)
 
         camera_position = np.array([x, y, z], dtype=np.float32)
 
