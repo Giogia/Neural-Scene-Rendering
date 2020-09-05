@@ -8,7 +8,6 @@ MODEL = 'Eric'
 ANIMATION = 'Finger Taunt'
 
 
-
 def get_dataset(camera_list=None, frame_list=None, background=False, use_depth=False, subsample_type=None, animation=ANIMATION):
     from src.datasets.blender import Dataset
     return Dataset(
@@ -96,7 +95,7 @@ class Progress:
 class Render:
     """Render model with training camera or from novel viewpoints."""
 
-    def __init__(self, cam=1, show_target=False, view_template=False):
+    def __init__(self, cam=None, show_target=False, view_template=False):
         self.cam = cam
         self.show_target = show_target
         self.view_template = view_template
@@ -129,3 +128,25 @@ class Render:
                              "rotate" if self.cam is None else self.cam,
                              "_template" if self.view_template else "")),
             show_target=self.show_target)
+
+
+class Evaluate:
+    """Evaluate model results using SSIM and PSNR metrics"""
+
+    def __init__(self, animation=ANIMATION, view_template=False):
+        self.view_template = view_template
+        self.animation = animation
+
+    def get_autoencoder(self, dataset):
+        return get_autoencoder(dataset)
+
+    def get_ae_args(self):
+        return dict(output_list=["i_rgb_rec", "i_alpha_rec"], view_template=self.view_template)
+
+    def get_dataset(self):
+        return get_dataset(camera_list=[i + 1 for i in range(parameters.CAMERAS_NUMBER)],
+                           frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
+                           background=True,
+                           use_depth=USE_DEPTH,
+                           subsample_type="random2",
+                           animation=self.animation)
