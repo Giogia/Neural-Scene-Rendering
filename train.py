@@ -130,7 +130,7 @@ if __name__ == "__main__":
     # perform a learning rate test
     if args.lrtest:
         lr_finder = LRFinder(ae, ae_optimizer, ae_loss, loss_weights, device=device, save_dir=outpath)
-        lr_finder.range_test(dataloader, num_iter=100)
+        lr_finder.range_test(dataloader, num_iter=100, start_lr=0.00001)
         lr_finder.plot(show_lr=lr_finder.max_lr())
         lr_finder.reset()
         print("Max learning rate found: {:.5f}".format(lr_finder.max_lr()))
