@@ -28,6 +28,7 @@ if __name__ == "__main__":
     parser.add_argument('profile', type=str, default="Render", help='config profile')
     parser.add_argument('--devices', type=int, nargs='+', default=[0], help='devices')
     parser.add_argument('--batchsize', type=int, default=16, help='batchsize')
+    parser.add_argument('--image', action='store_true', help='print image of models')
     parsed, unknown = parser.parse_known_args()
     for arg in unknown:
         if arg.startswith(("-", "--")):
@@ -50,6 +51,11 @@ if __name__ == "__main__":
     dataset = profile.get_dataset()
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=args.batchsize, shuffle=False, num_workers=16)
     print("Dataset instantiated ({:.2f} s)".format(time.time() - start_time))
+
+    # data writer
+    start_time = time.time()
+    writer = progress.get_writer()
+    print("Writer instantiated ({:.2f} s)".format(time.time() - start_time))
 
     # build autoencoder
     start_time = time.time()
@@ -81,11 +87,15 @@ if __name__ == "__main__":
             # forward
             output = ae([], **{k: x.to(device) for k, x in data.items()}, **profile.get_ae_args())
 
-            for k, v in output["metrics"].items():
-                print("{}: {:4f}".format(k, v))
+            if args.image:
+                writer.batch(iter_num, ground_truth=False, **output)
 
-            psnr.append(output['metrics']['psnr'])
-            ssim.append(output['metrics']['ssim'])
+            else:
+                for k, v in output["metrics"].items():
+                    print("{}: {:4f}".format(k, v))
+
+                psnr.append(output['metrics']['psnr'])
+                ssim.append(output['metrics']['ssim'])
 
             end_time = time.time()
             ips = 1. / (end_time - start_time)

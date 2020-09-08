@@ -5,23 +5,36 @@ from matplotlib import pyplot as plt
 from torch.utils.tensorboard import SummaryWriter
 
 
-def concatenate(rec, image):
+def concatenate(rec, image=None):
 
     rows = []
     row = []
 
-    for i in range(image.size(0)):
-        row.append(
-            np.concatenate((
-                rec[i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
-                image[i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]),
-                axis=1))
+    if image is not None:
 
-        if len(row) == 2:
-            rows.append(np.concatenate(row, axis=1))
-            row = []
+        for i in range(image.size(0)):
+            row.append(
+                np.concatenate((
+                    rec[i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2],
+                    image[i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2]),
+                    axis=1))
 
-    return np.concatenate(rows, axis=0)
+            if len(row) == 2:
+                rows.append(np.concatenate(row, axis=1))
+                row = []
+
+        return np.concatenate(rows, axis=0)
+
+    else:
+
+        for i in range(rec.size(0)):
+            row.append(rec[i].data.to("cpu").numpy().transpose((1, 2, 0))[::2, ::2])
+
+            if len(row) == 4:
+                rows.append(np.concatenate(row, axis=1))
+                row = []
+
+        return np.concatenate(rows, axis=0)
 
 
 def recolor(image, colors='magma'):
@@ -37,9 +50,12 @@ class ProgressWriter:
         self.outpath = outpath
         self.tensorboard = SummaryWriter(self.outpath)
 
-    def batch(self, iter_num, **kwargs):
+    def batch(self, iter_num, ground_truth=True, **kwargs):
 
-        image = concatenate(kwargs['i_rgb_rec'], kwargs['image'])
+        if ground_truth:
+            image = concatenate(kwargs['i_rgb_rec'], kwargs['image'])
+        else:
+            image = concatenate(kwargs['i_rgb_rec'])
         image = np.clip(image, 0, 255).astype(np.uint8)
         self.tensorboard.add_image('predicted colors', image, global_step=iter_num, dataformats='HWC')
         Image.fromarray(image).save(os.path.join(self.outpath, "prog_{:06}.jpg".format(iter_num)))
