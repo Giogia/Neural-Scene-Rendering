@@ -150,5 +150,4 @@ class Evaluate:
                            frame_list=[i for i in range(parameters.START_FRAME, parameters.END_FRAME)],
                            background=True,
                            use_depth=USE_DEPTH,
-                           subsample_type="random2",
                            animation=self.animation)
